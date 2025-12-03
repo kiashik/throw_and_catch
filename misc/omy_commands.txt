@@ -1,4 +1,4 @@
-# ------------ ROBOTPC COMMANDS ------------
+**# ------------ ROBOTPC COMMANDS ------------**
 
 # ssh INTO EMBEDDED ROS2 ON ROBOTPC
 ssh root@omy-SNPR44B9051.local
@@ -19,7 +19,7 @@ source ~/.bashrc
 ./docker/container.sh stop
 
 
-# ----------- USERPC COMMANDS ------------
+**# ----------- USERPC COMMANDS ------------**
 
 # source ROS2 underay
 source /opt/ros/jazzy/setup.bash
