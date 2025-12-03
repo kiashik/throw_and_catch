@@ -1,0 +1,22 @@
+# ---------------- ROBOTPC-------------------------------
+
+root@omy-SNPR44B9051:/data/docker/open_manipulator# ip -4 addr show | grep -A2 -E 'eth|enp|eno'
+3: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel qlen 1000
+    inet 129.65.44.233/24 brd 129.65.44.255 scope global eth0
+       valid_lft forever preferred_lft forever
+5: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue 
+
+
+# ---------------- USERPC -------------------------------
+cpsquare@optiplex7010:~$ ip -4 addr show | grep -A2 -E 'eth|enp|eno'
+2: eno1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    altname enp0s25
+    inet 129.65.44.209/24 brd 129.65.44.255 scope global dynamic noprefixroute eno1
+       valid_lft 3993sec preferred_lft 3993sec
+5: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default 
+
+
+
+root@docker-desktop:~/ros2_ws# hostname -I
+29.65.44.9 29.65.44.6 172.17.0.1 fdc4:f303:9324::3 fdc4:f303:9324::6 
+

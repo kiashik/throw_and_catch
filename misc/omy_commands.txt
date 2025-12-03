@@ -1,0 +1,45 @@
+# ------------ ROBOTPC COMMANDS ------------
+
+# ssh INTO EMBEDDED ROS2 ON ROBOTPC
+ssh root@omy-SNPR44B9051.local
+
+# START & ENTER CONTAINER ON ROBOTPC
+
+cd /data/docker/open_manipulator
+git checkout jazzy
+git pull
+./docker/container.sh start
+./docker/container.sh enter
+
+# SET ROS_DOMAIN_ID=25
+echo 'export ROS_DOMAIN_ID=25' >> ~/.bashrc
+source ~/.bashrc
+
+# KILL CONTAINER
+./docker/container.sh stop
+
+
+# ----------- USERPC COMMANDS ------------
+
+# source ROS2 underay
+source /opt/ros/jazzy/setup.bash
+
+
+# GO TO home->open_maipulator
+cd ~
+cd open_manipulator
+# Start container
+./docker/container.sh start
+
+# Enter the running container
+./docker/container.sh enter
+
+
+# ---------------- all pCS---------------
+ export ROS_DOMAIN_ID=25
+ export RWM_IMPLEMENTATION=rmw_fastrtps_cpp
+ export DISPLAY=:0
+
+ echo $ROS_DOMAIN_ID
+ echo $RWM_IMPLEMENTATION
+ echo $DISPLAY
