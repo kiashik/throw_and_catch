@@ -43,3 +43,5 @@ cd open_manipulator
  echo $ROS_DOMAIN_ID
  echo $RWM_IMPLEMENTATION
  echo $DISPLAY
+ 
+ # jan 5, testing if connectin to github is good!!
