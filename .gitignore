@@ -1,0 +1,4 @@
+# Colcon / ROS 2 build artifacts
+throw_and_catch_ws/build/
+throw_and_catch_ws/install/
+throw_and_catch_ws/log/
