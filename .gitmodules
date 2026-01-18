@@ -6,4 +6,4 @@
 	url = https://github.com/ROBOTIS-GIT/physical_ai_tools.git
 [submodule "throw_and_catch_ws/src/realsense-ros"]
 	path = throw_and_catch_ws/src/realsense-ros
-	url = git@github.com:realsenseai/realsense-ros.git
+	url = https://github.com/realsenseai/realsense-ros.git
