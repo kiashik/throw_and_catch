@@ -1,84 +1,119 @@
+#!/usr/bin/env python3
+"""
+Simple node to send Open Manipulator Y to a hard-coded pose
+"""
 
-import select
-import sys
-import termios
-import threading
+
 import time
-import tty
 
-from control_msgs.action import GripperCommand
+
 import rclpy
-from rclpy.action import ActionClient
 from rclpy.node import Node
-from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
 
 
-class MoveArmTo(Node):
 
-    def __init__(self):
-        super().__init__('move_arm_to')
 
-        # Publisher for arm joint control
-        self.arm_publisher = self.create_publisher(
-            JointTrajectory, '/arm_controller/joint_trajectory', 10
-        )
+class MoveArmToHardcodedPose(Node):
+   """Node that sends the arm to a hard-coded target pose"""
 
-        # Action client for GripperCommand
-        self.gripper_client = ActionClient(
-            self, GripperCommand, '/gripper_controller/gripper_cmd'
-        )
 
-        # Subscriber for joint states
-        self.subscription = self.create_subscription(
-            JointState, '/joint_states', self.joint_state_callback, 10
-        )
+   def __init__(self):
+       super().__init__('move_arm_to_hardcoded')
 
-        self.arm_joint_positions = [0.0] * 6
-        self.arm_joint_names = [
-            'joint1',
-            'joint2',
-            'joint3',
-            'joint4',
-            'joint5',
-            'joint6',
-        ]
 
-        self.gripper_position = 0.0
-        self.gripper_max = 1.1
-        self.gripper_min = 0.0
+       # Publisher for arm joint control
+       self.arm_publisher = self.create_publisher(
+           JointTrajectory, '/arm_controller/joint_trajectory', 10
+       )
 
-    def send_arm_command(self):
-        arm_msg = JointTrajectory()
-        arm_msg.joint_names = self.arm_joint_names
-        arm_point = JointTrajectoryPoint()
-        arm_point.positions = self.arm_joint_positions
-        arm_point.time_from_start.sec = 0
-        arm_msg.points.append(arm_point)
-        self.arm_publisher.publish(arm_msg)
-        self.get_logger().info(f'Arm command sent: {self.arm_joint_positions}')
+
+       self.arm_joint_names = [
+           'joint1',
+           'joint2',
+           'joint3',
+           'joint4',
+           'joint5',
+           'joint6',
+       ]
+
+
+       # Hard-coded target pose (in radians)
+       self.target_pose = [
+           0.0,      # joint1
+           -0.5,     # joint2
+           0.5,      # joint3
+           0.5,      # joint4
+           0.0,      # joint5
+           0.0,      # joint6
+       ]
+
+
+       self.get_logger().info(f'Node initialized with target pose: {self.target_pose}')
+    
+
+
+     # Create a timer to send command after connection
+       self.timer = self.create_timer(1.0, self.timer_callback)
+       self.command_sent = False
+
+
+   def timer_callback(self):
+       if not self.command_sent:
+           self.send_to_target_pose(duration_sec=2.0)
+           self.command_sent = True
+           # Optionally destroy the timer after sending
+        #    self.timer.cancel()
+
+   def send_to_target_pose(self, duration_sec: float = 2.0):
+       """
+       Send arm to the hard-coded target pose
+      
+       Args:
+           duration_sec: Time in seconds to reach the target
+       """
+       arm_msg = JointTrajectory()
+       arm_msg.joint_names = self.arm_joint_names
+      
+       arm_point = JointTrajectoryPoint()
+       arm_point.positions = self.target_pose
+       arm_point.time_from_start.sec = int(duration_sec)
+       arm_point.time_from_start.nanosec = int((duration_sec % 1.0) * 1e9)
+      
+       arm_msg.points.append(arm_point)
+       self.arm_publisher.publish(arm_msg)
+      
+       self.get_logger().info(
+           f'Arm command sent to target pose: {[f"{p:.3f}" for p in self.target_pose]} '
+           f'(Duration: {duration_sec}s)'
+       )
+
 
 
 
 def main():
-    rclpy.init()
-    node = MoveArmTo()
+   rclpy.init()
+   node = MoveArmToHardcodedPose()
 
-    thread = threading.Thread(target=node.run)
-    thread.start()
 
-    try:
-        while thread.is_alive():
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        print('\nCtrl+C detected. Shutting down...')
-        node.running = False
-        thread.join()
+   # Give the publisher time to connect
+   time.sleep(1.0)
 
-    node.destroy_node()
-    rclpy.shutdown()
+
+   # Send the arm to the hard-coded pose
+   node.send_to_target_pose(duration_sec=2.0)
+
+
+   # Keep the node running for a bit
+   time.sleep(3.0)
+
+
+   node.destroy_node()
+   rclpy.shutdown()
+
+
 
 
 if __name__ == '__main__':
-    main()
+   main()

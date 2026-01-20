@@ -24,6 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            "move_arm_to = move_arm_to.move_arm_to:main",
+
         ],
     },
 )
