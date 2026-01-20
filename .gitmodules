@@ -7,7 +7,3 @@
 [submodule "throw_and_catch_ws/src/realsense-ros"]
 	path = throw_and_catch_ws/src/realsense-ros
 	url = https://github.com/realsenseai/realsense-ros.git
-[submodule "throw_and_catch_ws/src/image_pipeline"]
-	path = throw_and_catch_ws/src/image_pipeline
-	url = https://github.com/ros-perception/image_pipeline.git
-	branch = jazzy
