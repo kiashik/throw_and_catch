@@ -2,3 +2,7 @@
 throw_and_catch_ws/build/
 throw_and_catch_ws/install/
 throw_and_catch_ws/log/
+throw_and_catch_ws/src/.vscode/
+throw_and_catch_ws/src/vision/vision/__pycache__/
+
+
