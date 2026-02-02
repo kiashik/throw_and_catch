@@ -17,21 +17,26 @@ class CalCamRobot(Node):
         # Define robot frame positions of each AprilTag (in robot base frame)
         # TODO: Update these with your actual robot measurements
         self.robot_points = {
-            0: np.array([0.079, -0.087, 0]),      # tag_0 position in robot base frame
-            1: np.array([0.079, -0.027, 0]),      # tag_1
-            2: np.array([0.079, 0.033, 0]),      # tag_2
-            3: np.array([0.079, 0.093, 0]),      # tag_3
-            4: np.array([0.139, -0.087, 0]),      # tag_4
-            5: np.array([0.139, -0.027, 0]),      # tag_5
-            6: np.array([0.139, 0.033, 0]),      # tag_6
-            7: np.array([0.139, 0.093, 0]),      # tag_7
-            8: np.array([0.199, -0.087, 0]),      # tag_8
-            9: np.array([0.199, -0.027, 0]),      # tag_9
-            10: np.array([0.199, 0.033, 0]),     # tag_10
-            11: np.array([0.199, 0.093, 0]),     # tag_11
-            # 12: np.array([-0.027, 0.6, 0]),     # tag_12
-            # 13: np.array([0.2, 0.7, 0]),     # tag_13
-            # 14: np.array([0, 0.8, 0]),     # tag_14
+            0: np.array([0.2370, -0.1450, 0.0]),      # tag_0 position in robot base frame
+            1: np.array([0.1470, -0.1450, 0.0]),      # tag_1
+            2: np.array([0.2370, -0.0550, 0.0]),      # tag_2
+            3: np.array([0.1470, -0.0550, 0.0]),      # tag_3
+            4: np.array([0.2370, 0.04500, 0.0]),      # tag_4
+            5: np.array([0.1470, 0.04500, 0.0]),      # tag_5
+
+            6: np.array([0.4535, -0.1445, 0.0]),      # tag_6
+            7: np.array([0.3635, -0.1445, 0.0]),      # tag_7
+            8: np.array([0.4535, -0.0545, 0.0]),      # tag_8
+            9: np.array([0.3635, -0.0545, 0.0]),      # tag_9
+            10: np.array([0.4535, 0.04550, 0.0]),     # tag_10
+            11: np.array([0.3635, 0.04550, 0.0]),     # tag_11
+
+            12: np.array([0.4530, -0.2350, 0.0]),     # tag_12
+            13: np.array([0.4530, -0.3250, 0.0]),     # tag_13
+            14: np.array([0.3630, -0.2350, 0.0]),     # tag_14
+            15: np.array([0.3630, -0.3250, 0.0]),     # tag_15
+            16: np.array([0.2730, -0.2350, 0.0]),     # tag_16
+            17: np.array([0.2730, -0.3250, 0.0]),     # tag_17
         }
         
         # TF listener to get camera -> tag transforms
@@ -77,7 +82,7 @@ class CalCamRobot(Node):
                 pass
         
         # Need at least 3 points for calibration
-        if len(camera_points_list) >= 3:
+        if len(camera_points_list) >= 18:
             camera_points = np.array(camera_points_list)
             robot_points = np.array(robot_points_list)
             
