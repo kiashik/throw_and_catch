@@ -86,6 +86,7 @@ def main():
     # set 4 pose goals that trace a rectangle in task space
     rectangle_poses = [
         (-0.0, -0.403, 0.335),
+        (0.0, 0.0, 0.25),
     ]
 
     for idx, (x, y, z) in enumerate(rectangle_poses, start=1):
@@ -108,7 +109,7 @@ def main():
         )
 
         logger.info(f"Planning to rectangle waypoint {idx}: x={x}, y={y}, z={z}")
-        plan_and_execute(omy, omy_arm, logger, sleep_time=5.0)
+        plan_and_execute(omy, omy_arm, logger, sleep_time=1.0)
     
     logger.info("Motion completed")
 
