@@ -5,6 +5,8 @@ from rclpy.node import Node
 import numpy as np
 from tf2_ros import TransformListener, Buffer
 # import time
+import os
+from ament_index_python.packages import get_package_share_directory
 
 import matplotlib.pyplot as plt
 
@@ -169,13 +171,17 @@ class CalCamRobot(Node):
         return errors.mean()
 
     def save_calibration(self, T):
-        """Save calibration to file."""
-        filename = '/tmp/camera_robot_calibration.npy'
+        pkg_share = get_package_share_directory('vision')
+        config_dir = os.path.join(pkg_share, 'config')
+        os.makedirs(config_dir, exist_ok=True)
+
+        filename = os.path.join(config_dir, 'camera_robot_calibration.npy')
         np.save(filename, T)
+
         self.get_logger().info(f"\nCalibration saved to {filename}")
         
         # Also save as readable format
-        filename_txt = '/tmp/camera_robot_calibration.txt'
+        filename_txt = os.path.join(config_dir, 'camera_robot_calibration.txt')
         with open(filename_txt, 'w') as f:
             f.write("Camera to Robot Transformation Matrix\n")
             f.write("="*50 + "\n\n")
@@ -187,7 +193,6 @@ class CalCamRobot(Node):
             f.write(str(T[:3, 3]))
         self.get_logger().info(f"Calibration saved to {filename_txt}")
 
-##########################
 def plot_3D_calibration(camera_points, robot_points, T_cam_robot):
     """
     Visual verification for cal_cam_robot.py
