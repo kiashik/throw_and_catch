@@ -7,3 +7,5 @@
 [submodule "throw_and_catch_ws/src/realsense-ros"]
 	path = throw_and_catch_ws/src/realsense-ros
 	url = https://github.com/realsenseai/realsense-ros.git
+[submodule "throw_and_catch_ws/src/apriltag_ros"]
+	url = git@github.com:kiashik/apriltag_ros.git
