@@ -10,3 +10,4 @@
 [submodule "throw_and_catch_ws/src/apriltag_ros"]
 	url = git@github.com:kiashik/apriltag_ros.git
 	path = throw_and_catch_ws/src/apriltag_ros
+	branch = master
