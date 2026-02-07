@@ -2,3 +2,20 @@
 throw_and_catch_ws/build/
 throw_and_catch_ws/install/
 throw_and_catch_ws/log/
+throw_and_catch_ws/src/.vscode/
+throw_and_catch_ws/src/vision/vision/__pycache__/
+
+
+
+# VSCode
+.vscode/
+**/.vscode/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# Generated graphviz / pdf outputs
+**/frames_*.gv
+**/frames_*.pdf

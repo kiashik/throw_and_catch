@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
         'opencv_ros_node = vision.opencv_ros_node:main',
         'opencv_ros_node_rs = vision.opencv_ros_node_rs:main',
+        'cal_cam_robot = vision.cal_cam_robot:main',
         ],
     },
 )
