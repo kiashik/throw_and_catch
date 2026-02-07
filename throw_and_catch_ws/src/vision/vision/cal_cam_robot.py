@@ -1,23 +1,48 @@
 #!/usr/bin/env python3
 
+"""
+--- Purpose:
+Compute and save the transformation between the camera and robot base frames 
+using AprilTag detections using kabsch algorithm (SVD-based method).
+
+--- How to use:
+Assumes you have the following running:
+1. A camera bringup node publishing color images and camera info.
+2. The apriltag_ros node running to detect the 36h11 tags and publish TF 
+    transforms for each detected tag (i.e. using camera_36h11.launch.py).
+
+
+--- Parameters / Configuration
+Takes no parameters, but relies on the hard-coded robot frame positions of the 
+tags defined in the self.robot_points dictionary.
+
+Excepts 18 apriltags with IDs 0-17 to be placed in the robot workspace at the 
+positions defined.
+
+The camera robot transform is saved to 
+- <ros_ws>/install/vision/share/config/camera_robot_calibration.npy (as a numpy array)
+- <ros_ws>/install/vision/share/config/camera_robot_calibration.txt (as a human-readable text file)
+
+TODO: if time permits, display camera view with detected tags and their IDs for 
+visual verification like Ashik did in ee 471.
+
+"""
+
 import rclpy
 from rclpy.node import Node
 import numpy as np
 from tf2_ros import TransformListener, Buffer
-# import time
 import os
 from ament_index_python.packages import get_package_share_directory
 
 import matplotlib.pyplot as plt
 
-# ensure realsense2_camera is running and apriltag_ros is detecting tags.
 
 class CalCamRobot(Node):
     def __init__(self):
         super().__init__('cal_cam_robot')
         
         # Define robot frame positions of each AprilTag (in robot base frame)
-        # TODO: Update these with your actual robot measurements
         self.robot_points = {
             0: np.array([0.2370, -0.1450, 0.0]),      # tag_0 position in robot base frame
             1: np.array([0.1470, -0.1450, 0.0]),      # tag_1
@@ -83,7 +108,7 @@ class CalCamRobot(Node):
                 self.get_logger().debug(f"Could not get transform for tag {tag_id}: {e}")
                 pass
         
-        # Need at least 3 points for calibration
+        # Need at least 18 points for calibration
         if len(camera_points_list) >= 18:
             camera_points = np.array(camera_points_list)
             robot_points = np.array(robot_points_list)
@@ -120,7 +145,7 @@ class CalCamRobot(Node):
                 #############
         else:
             if not self.calibration_done:
-                self.get_logger().warn(f"Waiting for tags... Got {len(camera_points_list)}/3 minimum")
+                self.get_logger().warn(f"Waiting for tags... Got {len(camera_points_list)}/18 minimum")
 
     def compute_transform_svd(self, camera_points, robot_points):
         """
