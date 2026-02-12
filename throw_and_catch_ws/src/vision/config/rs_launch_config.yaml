@@ -1,0 +1,30 @@
+json_file_path: "''"
+
+enable_color: true
+rgb_camera.color_profile: 1280x720x30   # (1280x720x30), (1280, 800, 30), (424, 240, 90/60/30), (480, 270, 30/60/90), (630, 360, 30/60/90), (640x480x30/60), (848x480x30/60)
+rgb_camera.enable_auto_exposure: false
+rgb_camera.exposure: 40     # shutter speed
+
+enable_depth: true
+enable_infra: false
+enable_infra1: false
+enable_infra2: false
+depth_module.depth_profile: 0,0,0
+depth_module.color_profile: 0,0,0
+depth_module.exposure: 8500
+depth_module.gain: 16
+depth_module.enable_auto_exposure: true
+
+enable_sync: true
+enable_rgbd: true
+
+
+pointcloud.enable: false
+pointcloud.ordered_pc: false
+
+align_depth.enable: true
+colorizer.enable: false
+
+
+publish_tf: true
+tf_publish_rate: 0.0
