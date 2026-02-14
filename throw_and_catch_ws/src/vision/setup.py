@@ -15,6 +15,7 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
+        (os.path.join('share', package_name, 'yolo_models'), glob('vision/yolo_models/*.pt')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -32,6 +33,7 @@ setup(
         'opencv_ros_node = vision.opencv_ros_node:main',
         'opencv_ros_node_rs = vision.opencv_ros_node_rs:main',
         'cal_cam_robot = vision.cal_cam_robot:main',
+        'ball_detector = vision.ball_detector:main',
         ],
     },
 )
