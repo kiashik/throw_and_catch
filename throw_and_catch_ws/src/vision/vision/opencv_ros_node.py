@@ -1,6 +1,8 @@
 import cv2
 import rclpy
 from rclpy.node import Node
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
 
 
 class OpenCVNode(Node):
@@ -13,6 +15,15 @@ class OpenCVNode(Node):
             self.get_logger().error('Failed to open camera (index 0).')
             raise RuntimeError('Camera open failed')
 
+        # Initialize CvBridge for image conversion
+        self.bridge = CvBridge()
+
+        # Create publisher for the image topic
+        topic = 'webcam/image_raw'
+        self.image_publisher = self.create_publisher(Image, topic, 10)
+        self.get_logger().info(f'Publishing webcam images on topic: {topic}')
+
+
         # Timer drives the loop at ~30 Hz
         self.timer = self.create_timer(1.0 / 30.0, self.loop)
 
@@ -22,7 +33,11 @@ class OpenCVNode(Node):
             self.get_logger().warn('Failed to read frame from camera.')
             return
 
-        cv2.imshow('frame', frame)
+        # Convert OpenCV frame to ROS2 Image message and publish
+        ros_image = self.bridge.cv2_to_imgmsg(frame, encoding='bgr8')
+        self.image_publisher.publish(ros_image)
+
+        cv2.imshow('frame in opencv_ros_node', frame)
 
         # Press 'q' in the OpenCV window to quit
         if (cv2.waitKey(1) & 0xFF) == ord('q'):
