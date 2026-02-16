@@ -34,6 +34,8 @@ setup(
         'opencv_ros_node_rs = vision.opencv_ros_node_rs:main',
         'cal_cam_robot = vision.cal_cam_robot:main',
         'ball_detector = vision.ball_detector:main',
+        'ball_pose_estimation = vision.ball_pose_estimation:main',
+        'ball_pose_estimation_depth = vision.ball_pose_estimation_depth:main'
         ],
     },
 )
