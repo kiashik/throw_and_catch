@@ -72,7 +72,7 @@ class BallDettector(Node):
 
         # SUBSCRIBE to the appropriate topic to get RGB images
         # RealSense color topic when launched with rs_launch.py:
-        # topic = '/camera/camera/color/image_raw'      # TODO select appropriate topic
+        # topic = '/camera/camera/color/image_raw'      # TODO (kayla) select appropriate topic
         topic = 'webcam/image_raw'      # test dummy node for webcam images     
         self.sub = self.create_subscription(Image, topic, self.cb, 10)
 
@@ -88,7 +88,7 @@ class BallDettector(Node):
         yolo_model_path = os.path.join(package_share_dir, 'yolo_models', 'yolo11n_last_tennis_ball_eudyi_xwxjf.pt')
         self.ball_detector = YOLO(yolo_model_path)      # load a yolo model
         
-        # TODO: note what hardware lab computer has. if has good enough GPU, use device="cuda:0", else use 'cpu'.
+        # TODO: (kayla) note what hardware lab computer has. if has good enough GPU, use device="cuda:0", else use 'cpu'.
         # YOLO uses GPU acceleration. on ashik's laptop, using gpu produces detection virtually instantly.
         # if cpu is used, there's like a 1-2 sec lag.
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
