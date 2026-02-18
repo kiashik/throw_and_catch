@@ -72,8 +72,8 @@ class BallDettector(Node):
 
         # SUBSCRIBE to the appropriate topic to get RGB images
         # RealSense color topic when launched with rs_launch.py:
-        # topic = '/camera/camera/color/image_raw'      # TODO (kayla) select appropriate topic
-        topic = 'webcam/image_raw'      # test dummy node for webcam images     
+        topic = '/camera/camera/color/image_raw'   
+        # topic = 'webcam/image_raw'      # test dummy node for webcam images     
         self.sub = self.create_subscription(Image, topic, self.cb, 10)
 
         self.get_logger().info(f"Subscribing to: {topic}")
@@ -122,7 +122,7 @@ class BallDettector(Node):
         results_yolo = self.ball_detector.predict(im, conf=0.25, 
                                     imgsz=(1280,720), half=True, device=self.device,        # unsure about imgsz
                                     max_det=1, visualize=False, show_boxes=True, 
-                                    stream=False, show=False)   # in px
+                                    stream=False, show=False, )   # in px
         
         self.get_ball_bbox(results_yolo)
         self.ball_detection_publisher_.publish(self.ball_detection_msg)
