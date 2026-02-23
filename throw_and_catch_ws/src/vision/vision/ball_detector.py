@@ -93,6 +93,8 @@ class BallDettector(Node):
         # if cpu is used, there's like a 1-2 sec lag.
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.get_logger().info(f"Using device: {self.device}")
+        self.imgsz = (640, 640)
+        self.get_logger().info(f"Using YOLO imgsz: {self.imgsz}")
 
     def cb(self, msg: Image):
         """
@@ -120,7 +122,7 @@ class BallDettector(Node):
         # see https://docs.ultralytics.com/modes/predict/#working-with-results 
         # for .predict() arguments and Results object attributes.
         results_yolo = self.ball_detector.predict(im, conf=0.25, 
-                                    imgsz=(1280,720), half=True, device=self.device,        # unsure about imgsz
+                                    imgsz=self.imgsz, half=True, device=self.device,
                                     max_det=1, visualize=False, show_boxes=True, 
                                     stream=False, show=False, )   # in px
         
