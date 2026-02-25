@@ -32,7 +32,7 @@ import numpy as np
 import cv2
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Point, PointStamped
+from geometry_msgs.msg import Point, PoseStamped
 from sensor_msgs.msg import CameraInfo, Image
 from vision_msgs.msg import BoundingBox2D
 from cv_bridge import CvBridge
@@ -50,7 +50,7 @@ class BallPoseEstimationDepth(Node):
         - '/camera/camera/color/image_raw' (sensor_msgs/Image): Color image for visualization
     
     Publishes to:
-        - 'ball_pose_depth/pose' (geometry_msgs/PointStamped): Ball position in camera frame
+        - 'ball_pose_depth/pose' (geometry_msgs/PoseStamped): Ball position in camera frame
     
     Displays:
         - OpenCV window showing ball position visualization (press 'q' to quit)
@@ -119,8 +119,8 @@ class BallPoseEstimationDepth(Node):
 
         # Publish ball 3D position in camera frame
         self.pose_pub_ = self.create_publisher(
-            PointStamped,
-            'ball_pose_estimation_depth/pose',
+            PoseStamped,
+            'ball_pose_estimation/pose',
             10
         )
 
@@ -237,7 +237,7 @@ class BallPoseEstimationDepth(Node):
         if self.ball_detection is not None:
             self.visualize_pose()
 
-    def compute_3d_position(self) -> PointStamped | None:
+    def compute_3d_position(self) -> PoseStamped | None:
         """
         Compute ball 3D position using depth information.
         
@@ -298,20 +298,20 @@ class BallPoseEstimationDepth(Node):
             y = (v - self.cy) * depth_m / self.fy
             z = depth_m
 
-            # Create PointStamped message
-            position_msg = PointStamped()
-            position_msg.header.stamp = self.get_clock().now().to_msg()
-            position_msg.header.frame_id = self.camera_frame_id or 'camera_color_optical_frame'
+            # Create PoseStamped message
+            pose_msg = PoseStamped()
+            pose_msg.header.stamp = self.get_clock().now().to_msg()
+            pose_msg.header.frame_id = self.camera_frame_id or 'camera_color_optical_frame'
             
-            position_msg.point.x = float(x)
-            position_msg.point.y = float(y)
-            position_msg.point.z = float(z)
+            pose_msg.pose.position.x = float(x)
+            pose_msg.pose.position.y = float(y)
+            pose_msg.pose.position.z = float(z)
 
             self.get_logger().info(
                 f"Ball position: x={x:.3f}m, y={y:.3f}m, z={z:.3f}m (depth={depth_m:.3f}m)"
             )
 
-            return position_msg
+            return pose_msg
 
         except Exception as e:
             self.get_logger().error(f"Error computing 3D position: {str(e)}")
@@ -361,7 +361,7 @@ class BallPoseEstimationDepth(Node):
                     cv2.putText(vis_image, text, (u + 10, v - 10),
                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
                     
-                    if depth_m > 0:
+                    if depth_m > 0 and self.cx is not None and self.cy is not None and self.fx is not None and self.fy is not None:
                         x = (u - self.cx) * depth_m / self.fx
                         y = (v - self.cy) * depth_m / self.fy
                         coord_text = f"({x:.2f}, {y:.2f}, {depth_m:.2f})"
