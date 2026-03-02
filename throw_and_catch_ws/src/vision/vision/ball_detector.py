@@ -129,12 +129,13 @@ class BallDettector(Node):
         self.get_ball_bbox(results_yolo)
         self.ball_detection_publisher_.publish(self.ball_detection_msg)
 
-        # Plot detections on the image
-        annotated_img = results_yolo[0].plot() if len(results_yolo) > 0 else im
-        cv2.imshow("Ball Detector", annotated_img)
+        # TODO: Uncomment to view detections on the image.
+        # # Plot detections on the image
+        # annotated_img = results_yolo[0].plot() if len(results_yolo) > 0 else im
+        # cv2.imshow("Ball Detector", annotated_img)
 
-        if (cv2.waitKey(1) & 0xFF) == ord('q'):
-            rclpy.shutdown()
+        # if (cv2.waitKey(1) & 0xFF) == ord('q'):
+        #     rclpy.shutdown()
 
     def get_ball_bbox(self, results_yolo):
         """
