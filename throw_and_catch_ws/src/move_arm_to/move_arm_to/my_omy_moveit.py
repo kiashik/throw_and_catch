@@ -130,12 +130,12 @@ def main():
     ###########################################################################
     add_collision_objects(planning_scene_monitor)
     logger.info("table added")
-    try:
-        while rclpy.ok():
-            time.sleep(0.5)
-    except KeyboardInterrupt:
-        pass
-    rclpy.shutdown()
+    # try:
+    #     while rclpy.ok():
+    #         time.sleep(0.5)
+    # except KeyboardInterrupt:
+    #     pass
+    # rclpy.shutdown()
 
 
     # ###########################################################################
@@ -200,43 +200,45 @@ def main():
     ###########################################################################
 
 
-    # # set 4 pose goals that trace a rectangle in task space
-    # rectangle_poses = [
-    #     (-0.0, -0.403, 0.335),
-    #     (0.0, 0.0, 0.25),
-    # ]
+    # set 4 pose goals that trace a rectangle in task space
+    rectangle_poses = [
+        (0.0, 0.0, 0.0),
+        (-0.0, -0.403, 0.335),
+        # # (0.0, 0.0, 0.25),
+        # (0.25, 0.25, 0.25),
+    ]
 
 
-    # for idx, (x, y, z) in enumerate(rectangle_poses, start=1):
-    #     # update the start state to the current robot state for each waypoint
-    #     omy_arm.set_start_state_to_current_state()
+    for idx, (x, y, z) in enumerate(rectangle_poses, start=1):
+        # update the start state to the current robot state for each waypoint
+        omy_arm.set_start_state_to_current_state()
 
 
-    #     pose_goal = PoseStamped()
-    #     pose_goal.header.frame_id = "world"
-    #     pose_goal.pose.orientation.x = 0.479
-    #     pose_goal.pose.orientation.y = 1.0
-    #     pose_goal.pose.orientation.z = 0.0
-    #     pose_goal.pose.orientation.w = 0.878
+        pose_goal = PoseStamped()
+        pose_goal.header.frame_id = "world"
+        pose_goal.pose.orientation.x = 0.0
+        pose_goal.pose.orientation.y = 1.0
+        pose_goal.pose.orientation.z = 0.0
+        pose_goal.pose.orientation.w = 0.0
 
 
-    #     pose_goal.pose.position.x = x
-    #     pose_goal.pose.position.y = y
-    #     pose_goal.pose.position.z = z
-    #     omy_arm.set_goal_state(
-    #         pose_stamped_msg=pose_goal,
-    #         pose_link="end_effector_link",
-    #     )
+        pose_goal.pose.position.x = x
+        pose_goal.pose.position.y = y
+        pose_goal.pose.position.z = z
+        omy_arm.set_goal_state(
+            pose_stamped_msg=pose_goal,
+            pose_link="end_effector_link",
+        )
 
 
-    #     logger.info(f"Planning to rectangle waypoint {idx}: x={x}, y={y}, z={z}")
-    #     plan_and_execute(omy, omy_arm, logger, sleep_time=1.0)
+        logger.info(f"Planning to rectangle waypoint {idx}: x={x}, y={y}, z={z}")
+        plan_and_execute(omy, omy_arm, logger, sleep_time=1.0)
 
-    # logger.info("Motion completed")
+    logger.info("Motion completed")
 
 
-    # time.sleep(2.0)  # keep node alive for a bit to inspect in RViz2
-    # rclpy.shutdown()
+    time.sleep(2.0)  # keep node alive for a bit to inspect in RViz2
+    rclpy.shutdown()
 
 
 

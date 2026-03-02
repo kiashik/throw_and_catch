@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+
+"""
+Fake Ball Pose Publisher
+Publishes random ball poses for testing the catch_ball_servo node.
+Publishes to: /ball_pose_estimation/rob_pose (geometry_msgs/PoseStamped)
+"""
+
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import PoseStamped
+
+
+class FakeBallPosePublisher(Node):
+    def __init__(self):
+        super().__init__('fake_ball_pose_publisher')
+        
+        # Publisher
+        self.pose_pub = self.create_publisher(
+            PoseStamped,
+            '/ball_pose_estimation/rob_pose',
+            10
+        )
+        
+        # Hardcoded 5 poses within 0.060m of origin (x, y, z in meters)
+        self.poses = [
+            (0.030, -0.030, 0.030), 
+            (0.050, -0.030, 0.000),  
+            (0.030, -0.030, 0.030), 
+            (0.050, -0.030, 0.060), 
+            (0.030, -0.030, 0.030), 
+            (0.050, -0.030, 0.000)
+        
+        ]
+        self.current_index = 0
+        
+        # Timer: publish every 2 seconds
+        self.timer = self.create_timer(2.0, self.timer_callback)
+        
+        self.get_logger().info("Fake Ball Pose Publisher started")
+        self.get_logger().info(f"Publishing {len(self.poses)} random poses within 0.060m of origin")
+        for i, pose in enumerate(self.poses):
+            self.get_logger().info(
+                f"  Pose {i+1}: x={pose[0]:.4f}, y={pose[1]:.4f}, z={pose[2]:.4f}"
+            )
+
+    def timer_callback(self):
+        """Publish the current pose and increment index"""
+        # Get current pose
+        x, y, z = self.poses[self.current_index]
+        
+        # Create PoseStamped message
+        msg = PoseStamped()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = "world"
+        
+        msg.pose.position.x = x
+        msg.pose.position.y = y
+        msg.pose.position.z = z
+        
+        # Orientation (doesn't matter for sphere)
+        msg.pose.orientation.x = 0.0
+        msg.pose.orientation.y = 0.0
+        msg.pose.orientation.z = 0.0
+        msg.pose.orientation.w = 1.0
+        
+        # Publish
+        self.pose_pub.publish(msg)
+        
+        self.get_logger().info(
+            f"Published pose {self.current_index + 1}/{len(self.poses)}: "
+            f"x={x:.4f}, y={y:.4f}, z={z:.4f}"
+        )
+        
+        # Increment index (loop back to 0 after last pose)
+        self.current_index = (self.current_index + 1) % len(self.poses)
+
+
+def main():
+    rclpy.init()
+    node = FakeBallPosePublisher()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        node.get_logger().info("Shutting down...")
+    finally:
+        node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()

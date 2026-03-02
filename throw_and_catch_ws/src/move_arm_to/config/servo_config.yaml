@@ -1,0 +1,63 @@
+###############################################################################
+# MoveIt Servo Configuration for Ball Catching
+# Joint velocity limits: 5.0 rad/s (from joint_limits.yaml)
+# Tuned for real-time cartesian tracking with ~18ms ball updates
+###############################################################################
+
+moveit_servo:
+  ros__parameters:
+    # ========== REQUIRED: Move Group Name ==========
+    move_group_name: "arm"  # The planning group to control
+    planning_frame: "world"  # Base/planning frame
+    ee_frame_name: "end_effector_link"  # End-effector frame
+    
+    publish_period: 0.02  # 50 Hz publish rate (matches catch_ball_servo)
+
+    # ========== Smoothing ==========
+    use_smoothing: true
+    smoothing_filter_plugin: "online_signal_smoothing/ButterworthFilterPlugin"
+
+    # ========== Command Settings ==========
+    command_in_type: "delta_twist_cmds"  # IMPORTANT: catch_ball_servo publishes TwistStamped
+    robot_link_command_frame: "end_effector_link"  # Commands in EE frame
+    command_frame: "world"  # Ball pose in world, but servo works in EE frame
+
+    # ========== Filter Settings ==========
+    incoming_command_mode: "topic_commands"  # Subscribe to /servo_server/delta_twist_cmds
+    pose_tracked_error_threshold: 0.1  # meters
+
+    # ========== Limits ==========
+    # Based on joint_limits.yaml max_velocity: 5.0 rad/s
+    linear_speed_limit: 0.5   # m/s (conservative for catching safety)
+    rotational_speed_limit: 1.0  # rad/s
+    lower_singularity_threshold: 17.0  # rad
+    upper_singularity_threshold: 18.0  # rad
+
+    # ========== Collision Avoidance ==========
+    use_collision_avoidance: true  # Set to true if you have environment obstacles
+
+    # ========== Stopping Behavior ==========
+    # Stop arm if servo loses command for more than:
+    incoming_command_timeout: 2.0  # seconds
+
+    # ========== Scaling ==========
+    scale:
+      linear: 1.0
+      rotational: 1.0
+      joint: 1.0
+
+    # ========== Servo Joint Limits (derived from joint_limits.yaml) ==========
+    # All joints have max_velocity: 5.0 rad/s
+    joint_limits:
+      joint1:
+        max_velocity: 5.0
+      joint2:
+        max_velocity: 5.0
+      joint3:
+        max_velocity: 5.0
+      joint4:
+        max_velocity: 5.0
+      joint5:
+        max_velocity: 5.0
+      joint6:
+        max_velocity: 5.0

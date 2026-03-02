@@ -19,8 +19,8 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='cpsquare',
-    maintainer_email='tomagrundler@icloud.com',
+    maintainer='ashik',
+    maintainer_email='ashikislam232@gmail.com',
     description='TODO: Package description',
     license='Apache-2.0',
     extras_require={
@@ -32,6 +32,14 @@ setup(
         'console_scripts': [
             "move_arm_to = move_arm_to.move_arm_to:main",
             "my_omy_moveit = move_arm_to.my_omy_moveit:main",
+            "omy_f3m_hello_moveit = move_arm_to.omy_f3m_hello_moveit:main",
+            "catch_ball_servo = move_arm_to.catch_ball_servo:main",
+            "catch_ball_simple = move_arm_to.catch_ball_simple:main",
+            "get_tag_pose = move_arm_to.get_tag_pose:main",
+            "average_pose_publisher = move_arm_to.average_pose_publisher:main",
+            "convert_pose_cam_to_rob = move_arm_to.convert_pose_cam_to_rob:main",
+            "track_april_tag = move_arm_to.track_april_tag:main",
+            "fake_ball_pose_publisher = move_arm_to.fake_ball_pose_publisher:main",
 
         ],
     },
