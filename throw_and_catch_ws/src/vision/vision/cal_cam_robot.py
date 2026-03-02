@@ -18,6 +18,7 @@ tags defined in the self.robot_points dictionary.
 
 Excepts 18 apriltags with IDs 0-17 to be placed in the robot workspace at the 
 positions defined.
+TODO: updated this doc string with 110mm tag positions once we have them.
 
 The camera robot transform is saved to 
 - <ros_ws>/install/vision/share/config/camera_robot_calibration.npy (as a numpy array)
@@ -41,9 +42,20 @@ import matplotlib.pyplot as plt
 class CalCamRobot(Node):
     def __init__(self):
         super().__init__('cal_cam_robot')
+
+        # reference point on the whiteboard in robot frame (x, y, z) in meters
+        wx = -1.259
+        wy = -0.436
+        wz = 0.174
+
+        # reference point on the corner of apriltags on whiteboard
+        ax = wx
+        ay = wy - 0.572 
+        az = wz
         
         # Define robot frame positions of each AprilTag (in robot base frame)
         self.robot_points = {
+            # 0 to 17 are 70mm tags on the table
             0: np.array([0.2370, -0.1450, 0.0]),      # tag_0 position in robot base frame
             1: np.array([0.1470, -0.1450, 0.0]),      # tag_1
             2: np.array([0.2370, -0.0550, 0.0]),      # tag_2
@@ -64,8 +76,31 @@ class CalCamRobot(Node):
             15: np.array([0.3630, -0.3250, 0.0]),     # tag_15
             16: np.array([0.2730, -0.2350, 0.0]),     # tag_16
             17: np.array([0.2730, -0.3250, 0.0]),     # tag_17
+
+            # 20 to 37 are 110 mm tags on the whiteboard
+            20: np.array([ax, ay - 0.5390, az + 0.2040]),      # tag_20 position in robot base frame
+            21: np.array([ax, ay - 0.5390, az + 0.0740]),      # tag_21
+            22: np.array([ax, ay - 0.3240, az + 0.2045]),      # tag_22
+            23: np.array([ax, ay - 0.3240, az + 0.0745]),      # tag_23
+            24: np.array([ax, ay - 0.1070, az + 0.2055]),      # tag_24
+            25: np.array([ax, ay - 0.1070, az + 0.0755]),      # tag_25
+            
+            26: np.array([ax, ay - 0.5390, az + 0.4825]),      # tag_26
+            27: np.array([ax, ay - 0.5390, az + 0.3525]),      # tag_27
+            28: np.array([ax, ay - 0.3235, az + 0.4835]),      # tag_28
+            29: np.array([ax, ay - 0.3235, az + 0.3535]),      # tag_29
+            30: np.array([ax, ay - 0.1070, az + 0.4835]),      # tag_30
+            31: np.array([ax, ay - 0.1070, az + 0.3535]),      # tag_31
+
+            32: np.array([ax, ay - 0.5390, az + 0.7610]),      # tag_32
+            33: np.array([ax, ay - 0.5390, az + 0.6310]),      # tag_33
+            34: np.array([ax, ay - 0.3230, az + 0.7625]),      # tag_34
+            35: np.array([ax, ay - 0.3230, az + 0.6325]),      # tag_35
+            36: np.array([ax, ay - 0.1070, az + 0.7630]),      # tag_36
+            37: np.array([ax, ay - 0.1070, az + 0.6330]),      # tag_37
         }
-        
+
+
         # TF listener to get camera -> tag transforms
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -109,7 +144,7 @@ class CalCamRobot(Node):
                 pass
         
         # Need at least 18 points for calibration
-        if len(camera_points_list) >= 18:
+        if len(camera_points_list) >= 17:
             camera_points = np.array(camera_points_list)
             robot_points = np.array(robot_points_list)
             
