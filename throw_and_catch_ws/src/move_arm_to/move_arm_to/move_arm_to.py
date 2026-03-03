@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 """
+--------------------------------------------------------------------------------
 Simple node to send Open Manipulator Y to a hard-coded pose
+DOES NOT USE ANY MOVEIT PLANNING, JUST TRAJECTORY EXECUTION.
+TODO: Unsure if this does any collision checking, so be careful when running.
+
+To run: 
+    ros2 run move_arm_to move_arm_to
+
+THIS IS FUNCTIONAL.
+--------------------------------------------------------------------------------
+03/03/2025 - Ashik Islam
 """
 
 
@@ -11,8 +21,6 @@ import rclpy
 from rclpy.node import Node
 from trajectory_msgs.msg import JointTrajectory
 from trajectory_msgs.msg import JointTrajectoryPoint
-
-
 
 
 class MoveArmToHardcodedPose(Node):

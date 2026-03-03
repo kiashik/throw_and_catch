@@ -1,5 +1,8 @@
 '''
 from Raegan
+
+THIS IS FUNCTIONNAL.
+
 Purpose: 
     Subscribes to a ball pose in camera frame and converts it to robot frame using a precomputed camera --> robot transformation matrix 
 
@@ -8,6 +11,9 @@ Purpose:
     -- publishes to:  '/ball_pose_estimation/rob_pose' (geometry_msgs/PoseStamped)
 
     -- requires: camera_robot_calibration.npy in vision/config --> to get transf matrix
+
+Usage:
+    ros2 run move_arm_to convert_pose_cam_to_rob
 
 '''
 

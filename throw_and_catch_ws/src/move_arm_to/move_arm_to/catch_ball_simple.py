@@ -3,6 +3,16 @@
 """
 Simple Ball Catching - Uses MoveIt trajectory execution
 Subscribes to ball pose and commands arm to move toward it.
+
+TODO:
+This tracks the ball but is very fast and properly buggy. 
+the robto got stuck with this code. I should probably delete this file.
+
+
+TO run: use the launch file:
+ros2 launch move_arm_to catch_ball_simple.launch.py
+
+
 """
 
 import rclpy

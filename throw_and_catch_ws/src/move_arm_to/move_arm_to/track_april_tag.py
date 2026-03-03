@@ -1,3 +1,10 @@
+"""
+from kayla and raegan.
+Does ball tracking NOT tag tracking. SHOULDN"T THERE BE A LAUNCH FILE FOR THIS??
+Maybe lab computer has it?
+
+"""
+
 import time
 import threading
 

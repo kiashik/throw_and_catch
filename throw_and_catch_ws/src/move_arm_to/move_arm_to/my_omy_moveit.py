@@ -1,5 +1,25 @@
 #!/usr/bin/env python3
 
+"""
+MoveItPy Example - Pose Goal
+
+I wrote this file to test out MoveItPy and make sure I can plan to pose goals with the OMY-F3M robot.
+I followed the MoveItPy tutorial and  Kayla & Raegan added some collision objects.
+Both of those things are working, so this is a successful test of MoveItPy with our robot.
+
+target pose of the robot can be set the following ways:
+    1) using predefined named poses (defined in omy_f3m_moveit_config/config/poses.yaml)
+    2) using a PoseStamped message (in world frame)
+    3) I think it's also possible to do joint-space pose, but i didn't do that cuz 
+    it's not needed for our  application. also move_arm_to node does that with 
+    direct trajectory execution.
+
+
+Usage:
+    ros2 launch move_arm_to my_omy_moveit.launch.py
+
+
+"""
 
 from platform import node
 import time

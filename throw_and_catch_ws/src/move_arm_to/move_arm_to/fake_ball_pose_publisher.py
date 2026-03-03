@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Fake Ball Pose Publisher
+Fake Ball Pose Publisher : used for testing without actual camera.
 Publishes random ball poses for testing the catch_ball_servo node.
 Publishes to: /ball_pose_estimation/rob_pose (geometry_msgs/PoseStamped)
 """
@@ -22,26 +22,24 @@ class FakeBallPosePublisher(Node):
             10
         )
         
-        # Hardcoded 5 poses within 0.060m of origin (x, y, z in meters)
+        # Realistic reachable poses for OMY-F3M robot (x, y, z in meters)
+        # draw a rectangle in front of the robot within its workspace
         self.poses = [
-            (0.030, -0.030, 0.030), 
-            (0.050, -0.030, 0.000),  
-            (0.030, -0.030, 0.030), 
-            (0.050, -0.030, 0.060), 
-            (0.030, -0.030, 0.030), 
-            (0.050, -0.030, 0.000)
-        
+            (-0.3, -0.4, 0.2),
+            (-0.3, -0.4, 0.6),
+            ( 0.3, -0.4, 0.2),
+            ( 0.3,  0.4, 0.6),
         ]
         self.current_index = 0
         
-        # Timer: publish every 2 seconds
-        self.timer = self.create_timer(2.0, self.timer_callback)
+        # Timer: publish every 3 seconds (gives planner time to execute)
+        self.timer = self.create_timer(3.0, self.timer_callback)
         
         self.get_logger().info("Fake Ball Pose Publisher started")
-        self.get_logger().info(f"Publishing {len(self.poses)} random poses within 0.060m of origin")
+        self.get_logger().info(f"Publishing {len(self.poses)} test poses in robot workspace")
         for i, pose in enumerate(self.poses):
             self.get_logger().info(
-                f"  Pose {i+1}: x={pose[0]:.4f}, y={pose[1]:.4f}, z={pose[2]:.4f}"
+                f"  Pose {i+1}: x={pose[0]:.3f}, y={pose[1]:.3f}, z={pose[2]:.3f}"
             )
 
     def timer_callback(self):
@@ -69,7 +67,7 @@ class FakeBallPosePublisher(Node):
         
         self.get_logger().info(
             f"Published pose {self.current_index + 1}/{len(self.poses)}: "
-            f"x={x:.4f}, y={y:.4f}, z={z:.4f}"
+            f"x={x:.3f}, y={y:.3f}, z={z:.3f}"
         )
         
         # Increment index (loop back to 0 after last pose)

@@ -5,7 +5,9 @@ Ball Catching with MoveIt Servo
 Subscribes to ball pose and drives end-effector to track it in real-time.
 
 Subscribes to: /ball_pose_estimation/rob_pose (PoseStamped)
-Publishes to: /servo_server/delta_twist_cmds (geometry_msgs/TwistStamped)
+Publishes to: /servo_node/delta_twist_cmds (geometry_msgs/TwistStamped)
+
+DO NOT RUN THIS: i'm only leaving this here so i can reference it later.
 """
 
 import rclpy
@@ -46,7 +48,7 @@ class CatchBallServo(Node):
         # Servo velocity command publisher
         self.servo_vel_pub = self.create_publisher(
             TwistStamped,
-            '/servo_server/delta_twist_cmds',
+            '/servo_node/delta_twist_cmds',
             10
         )
         

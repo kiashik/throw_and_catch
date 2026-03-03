@@ -40,12 +40,7 @@ def generate_launch_description():
         .robot_description_kinematics("config/kinematics.yaml")
         .joint_limits("config/omy_f3m/joint_limits.yaml")
         .trajectory_execution("config/omy_f3m/moveit_controllers.yaml")
-        .planning_pipelines(
-            default_planning_pipeline="ompl",
-            pipelines=["ompl", "chomp", "pilz_industrial_motion_planner"],
-            load_all=False,
-        )
-        .pilz_cartesian_limits("config/pilz_cartesian_limits.yaml")
+  
         .moveit_cpp(file_path=os.path.join(my_pkg_share, "config", "my_motion_planning_python_api_tutorial.yaml"))
         .to_moveit_configs()
     )
@@ -59,12 +54,12 @@ def generate_launch_description():
     servo_params = {
         "moveit_servo": {
             "move_group_name": "arm",
-            "planning_frame": "world",
-            "ee_frame_name": "end_effector_link",
-            "publish_period": 0.02,
+            "planning_frame": "world", #
+            "ee_frame_name": "end_effector_link", #
+            "publish_period": 0.02, #
             "use_smoothing": True,
             "smoothing_filter_plugin": "online_signal_smoothing/ButterworthFilterPlugin",
-            "command_in_type": "delta_twist_cmds",
+            "command_in_type": "speed_units",
             "robot_link_command_frame": "end_effector_link",
             "command_frame": "world",
             "incoming_command_mode": "topic_commands",
@@ -75,6 +70,7 @@ def generate_launch_description():
             "upper_singularity_threshold": 18.0,
             "use_collision_avoidance": True,
             "incoming_command_timeout": 2.0,
+            "command_out_topic": "/arm_controller/joint_trajectory",
             "scale": {
                 "linear": 1.0,
                 "rotational": 1.0,
@@ -94,6 +90,16 @@ def generate_launch_description():
             servo_params,
             {"use_sim_time": use_sim_time},
         ],
+        output="screen",
+    )
+
+    # =========================================================================
+    # Ball Catching Controller Node
+    # =========================================================================
+    catch_ball_servo_node = Node(
+        package="move_arm_to",
+        executable="catch_ball_servo",
+        parameters=[{"use_sim_time": use_sim_time}],
         output="screen",
     )
 
@@ -141,9 +147,10 @@ def generate_launch_description():
     return LaunchDescription(
         declared_arguments
         + [
-            move_group_node,
+            # move_group_node,
             servo_node,
-            joint_state_publisher,
+            catch_ball_servo_node,
+            # joint_state_publisher,
             # rviz_node,  # Uncomment for visualization
         ]
     )
