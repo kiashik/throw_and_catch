@@ -3,7 +3,7 @@
 Fake Delta Twist Publisher for testing MoveIt Servo.
 Publishes continuous twist commands at high frequency.
 
-tested with panda arm. it successfully moved panada arm.
+Tested with Panda arm. It successfully moved Panda arm.
 """
 import rclpy
 from rclpy.node import Node
