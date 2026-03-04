@@ -121,7 +121,7 @@ class BallDettector(Node):
         # get ball centroid in image frame as a list of Results objects.
         # see https://docs.ultralytics.com/modes/predict/#working-with-results 
         # for .predict() arguments and Results object attributes.
-        results_yolo = self.ball_detector.predict(im, conf=0.25, 
+        results_yolo = self.ball_detector.predict(im, conf=0.7, 
                                     imgsz=self.imgsz, half=True, device=self.device,
                                     max_det=1, visualize=False, show_boxes=True, 
                                     stream=False, show=False, )   # in px
