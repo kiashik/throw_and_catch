@@ -9,11 +9,8 @@ ros2 launch my_motion_planner my_servo.launch.py use_mock_hardware:=true
 # Test real hardware (when ready)
 ros2 launch my_motion_planner my_servo.launch.py
 
-currently does not set the command type for moveit_servo. 
-for now set with this cli command (1 for twist):
-    ros2 service call /servo_node/switch_command_type moveit_msgs/srv/ServoCommandType "{command_type: 1}"
-    see: https://github.com/moveit/moveit_msgs/blob/ros2/srv/ServoCommandType.srv 
 
+moving away from the "SUPPOSED" singularity, it works until it hits another singularity.
 
 
 NOT FULLY FUNCTIONAL.
@@ -26,7 +23,7 @@ from pathlib import Path
 import launch
 import launch_ros
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import DeclareLaunchArgument, RegisterEventHandler, TimerAction
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, RegisterEventHandler, TimerAction
 from launch.conditions import IfCondition, UnlessCondition
 from launch.event_handlers import OnProcessStart
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, Command, FindExecutable
@@ -167,7 +164,7 @@ def generate_launch_description():
                 package="tf2_ros",
                 plugin="tf2_ros::StaticTransformBroadcasterNode",
                 name="static_tf2_broadcaster",
-                parameters=[{"child_frame_id": "/link0", "frame_id": "/world"}],
+                parameters=[{"child_frame_id": "link0", "frame_id": "world"}],
             ),
         ],
         output="screen",
@@ -192,6 +189,19 @@ def generate_launch_description():
         condition=IfCondition(launch_as_standalone_node),
     )
 
+    def set_twist_command_type_action():
+        return ExecuteProcess(
+            cmd=[
+                "ros2",
+                "service",
+                "call",
+                "/servo_node/switch_command_type",
+                "moveit_msgs/srv/ServoCommandType",
+                "{command_type: 1}",
+            ],
+            output="screen",
+        )
+
     # Delay controller spawning after ros2_control_node starts
     delay_controller_spawner = RegisterEventHandler(
         event_handler=OnProcessStart(
@@ -205,12 +215,41 @@ def generate_launch_description():
         )
     )
 
+    # Set servo command type to TwistStamped after servo process starts.
+    set_twist_command_type_for_component = RegisterEventHandler(
+        event_handler=OnProcessStart(
+            target_action=container,
+            on_start=[
+                TimerAction(
+                    period=3.0,
+                    actions=[set_twist_command_type_action()],
+                )
+            ],
+        ),
+        condition=UnlessCondition(launch_as_standalone_node),
+    )
+
+    set_twist_command_type_for_standalone = RegisterEventHandler(
+        event_handler=OnProcessStart(
+            target_action=servo_node,
+            on_start=[
+                TimerAction(
+                    period=3.0,
+                    actions=[set_twist_command_type_action()],
+                )
+            ],
+        ),
+        condition=IfCondition(launch_as_standalone_node),
+    )
+
     return launch.LaunchDescription(
         declared_arguments
         + [
             rviz_node,
             ros2_control_node,
             delay_controller_spawner,
+            set_twist_command_type_for_component,
+            set_twist_command_type_for_standalone,
             servo_node,
             container,
         ]
