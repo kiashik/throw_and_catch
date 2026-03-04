@@ -15,10 +15,10 @@ Or include it in a launch file. Requires:
 
 --- Parameters / Configuration:
 - Ball radius: BALL_RADIUS constant (default: 0.0335 meters for tennis ball)
-- Ball centroid topic: 'ball_detector/centroid' (geometry_msgs/Point)
+- Ball centroid topic: '/ball_detector/centroid' (geometry_msgs/Point)
 - Camera info topic: '/camera/camera/color/camera_info' (sensor_msgs/CameraInfo)
 - Image topic: '/camera/camera/color/image_raw' (sensor_msgs/Image) - for visualization
-- Published topic: 'ball_pose_estimation/pose' (geometry_msgs/PoseStamped)
+- Published topic: '/ball_pose_estimation/pose' (geometry_msgs/PoseStamped)
 
 --- Improvements:
 - TODO 1. Figure out what to do if PnP solver fails or a new detection didn't come through 
@@ -62,7 +62,7 @@ class BallPoseEstimation(Node):
     ROS2 node that estimates 3D pose of a tennis ball using PnP algorithm.
     
     Subscribes to:
-        - 'ball_detector/detection' (vision_msgs/BoundingBox2D): Ball detection in image pixels
+        - '/ball_detector/detection' (vision_msgs/BoundingBox2D): Ball detection in image pixels
         - '/camera/camera/color/camera_info' (sensor_msgs/CameraInfo): Camera intrinsics
         - '/camera/camera/color/image_raw' (sensor_msgs/Image): Camera image for visualization
     
