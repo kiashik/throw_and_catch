@@ -143,8 +143,9 @@ class CalCamRobot(Node):
                 self.get_logger().debug(f"Could not get transform for tag {tag_id}: {e}")
                 pass
         
-        # Need at least 18 points for calibration
-        if len(camera_points_list) >= 17:
+        # Need at least 15 points for calibration
+        num_of_tags = 15    #TODO make this into a parameter to be given at launch time if we want
+        if len(camera_points_list) >= num_of_tags:
             camera_points = np.array(camera_points_list)
             robot_points = np.array(robot_points_list)
             
@@ -180,7 +181,7 @@ class CalCamRobot(Node):
                 #############
         else:
             if not self.calibration_done:
-                self.get_logger().warn(f"Waiting for tags... Got {len(camera_points_list)}/18 minimum")
+                self.get_logger().warn(f"Waiting for tags... Got {len(camera_points_list)}/{num_of_tags} minimum")
 
     def compute_transform_svd(self, camera_points, robot_points):
         """
