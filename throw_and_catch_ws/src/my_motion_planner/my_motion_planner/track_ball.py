@@ -10,10 +10,23 @@ how to run:
    ros2 launch open_manipulator_gazebo open_manipulator_gazebo.launch.py
 
 3) Start this node to track the ball (this runs moveit and RViz too): 
-    ros2 launch my_motion_planner track_ball.launch.py sim_time:=true
+    ros2 launch my_motion_planner track_ball.launch.py use_sim:=true
 
     
-    i think it works, but it's hard to tell.
+WORKS IN SIM:
+IN SIM, If the ball doesn’t move, the robot still moves tothe same ball pose. 
+I think since ompl is nondeterministic, it’s computing different traj to the 
+same pose every time. We can probably figure out how to only command robot is 
+ball has moved a certain distance so the robot doesn’t take a long traj to 
+where it already was.
+
+TOOD:maybe we shoudl only plan and excute if the ball has moved a certain distance 
+from the last goal, otherwise we might be spamming moveit with new goals every 
+time we get a new ball pose, even if it’s just a small update. This would also 
+help with the issue of the robot moving to the same pose repeatedly if the ball 
+isn’t moving much. We can add a simple distance check before sending a new goal 
+to moveit, and only send it if the ball has moved more than a certain threshold (
+e.g. 5cm) from the last goal position.
 """
 
 import numpy as np
@@ -78,7 +91,7 @@ class TrackBall(Node):
         self.current_ball_pose = None
         self.last_goal_target = None
         self.last_ball_update_time = None
-        self.goal_position_threshold = 0.02  # Only resend goal if target moved >2cm
+        self.goal_position_threshold = 0.06 # Only resend goal if target moved >6cm
         self.ball_lost_timeout = 1.0  # Hold position if no ball updates for this long
 
 
@@ -188,10 +201,10 @@ class TrackBall(Node):
         try:
             goal = MoveGroup.Goal()
             goal.request.group_name = "arm"
-            goal.request.num_planning_attempts = 2
-            goal.request.allowed_planning_time = 2.0
-            goal.request.max_acceleration_scaling_factor = 0.32
-            goal.request.max_velocity_scaling_factor = 0.32
+            goal.request.num_planning_attempts = 1
+            goal.request.allowed_planning_time = 0.3        # time time might need to match how often a new ball pose is recived
+            goal.request.max_acceleration_scaling_factor = 0.5
+            goal.request.max_velocity_scaling_factor = 0.5
 
             # Set target pose
             target_pose = PoseStamped()
