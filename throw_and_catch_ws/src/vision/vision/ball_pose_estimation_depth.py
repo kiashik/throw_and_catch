@@ -25,7 +25,7 @@ Or include it in a launch file. Requires:
 
 --- Improvement
 TODO need to figure out what format(resolution ratio) is available for both  depth and rgb.
-TODO same as ball_pose_estimation using rgb and pnp. the last known ball location persists if ball disappears suddenly.
+TODO same as ball_pose_estimation using rgb and pnp, the last known ball location persists if ball disappears suddenly.
 """
 
 import numpy as np
