@@ -21,7 +21,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     pose_estimation_method_arg = DeclareLaunchArgument(
         'pose_estimation_method',
-        default_value='pnp',  # remove this if you want it required
+        default_value='depth',  # remove this if you want it required
         description='Method for pose estimation: "pnp" or "depth"'
     )
 
