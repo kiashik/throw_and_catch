@@ -121,21 +121,30 @@ class BallDettector(Node):
         # get ball centroid in image frame as a list of Results objects.
         # see https://docs.ultralytics.com/modes/predict/#working-with-results 
         # for .predict() arguments and Results object attributes.
-        results_yolo = self.ball_detector.predict(im, conf=0.7, 
+        results_yolo = self.ball_detector.predict(im, conf=0.4, 
                                     imgsz=self.imgsz, half=True, device=self.device,
                                     max_det=1, visualize=False, show_boxes=True, 
                                     stream=False, show=False, )   # in px
+
+        # results_yolo = self.ball_detector.track(
+        #                                         im,
+        #                                         conf=0.7,
+        #                                         imgsz=self.imgsz,
+        #                                         device=self.device,
+        #                                         half=True,
+        #                                         persist=True,   # keep tracker state across frames
+        #                                         verbose=False,
+        #                                         max_det=1,
+        #                                         visualize=False,)
         
         self.get_ball_bbox(results_yolo)
         self.ball_detection_publisher_.publish(self.ball_detection_msg)
 
-        # TODO: Uncomment to view detections on the image.
-        # # Plot detections on the image
-        # annotated_img = results_yolo[0].plot() if len(results_yolo) > 0 else im
-        # cv2.imshow("Ball Detector", annotated_img)
+        annotated_img = results_yolo[0].plot() if len(results_yolo) > 0 else im
+        cv2.imshow("Ball Detector", annotated_img)
 
-        # if (cv2.waitKey(1) & 0xFF) == ord('q'):
-        #     rclpy.shutdown()
+        if (cv2.waitKey(1) & 0xFF) == ord('q'):
+            rclpy.shutdown()
 
     def get_ball_bbox(self, results_yolo):
         """
@@ -228,4 +237,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
