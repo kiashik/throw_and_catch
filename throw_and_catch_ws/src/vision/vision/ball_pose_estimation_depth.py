@@ -38,6 +38,7 @@ from vision_msgs.msg import BoundingBox2D
 from cv_bridge import CvBridge
 import pyrealsense2 as rs
 
+BALL_RADIUS = 0.033  # meters. used to adjust depth value from ball surface to balll center
 
 class BallPoseEstimationDepth(Node):
     """
@@ -282,6 +283,7 @@ class BallPoseEstimationDepth(Node):
             # Use median for robustness (TODO need to experiment with mean as well)
             depth_raw = np.median(valid_depths)
             depth_m = depth_raw * self.depth_scale  # Convert raw depth units to meters using depth scale
+            depth_m = depth_m + BALL_RADIUS  # Adjust depth to ball center by adding radius (since depth is to surface)
 
             if depth_m <= 0 or depth_m > 6.0:  # Sanity check (ball should be within 6m). Our room is like 8m wide.
                 self.get_logger().warn(f"Invalid depth value: {depth_m:.3f}m")
