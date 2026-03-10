@@ -55,7 +55,7 @@ quaternion = rot.as_quat()  # Returns [x, y, z, w]
 
 # Constants
 #TODO: measure our tennis ball
-BALL_RADIUS = 0.0335  # meters (standard tennis ball diameter ~6.7cm, radius ~3.35cm)
+BALL_RADIUS = 0.07/2  # meters (standard tennis ball diameter ~6.7cm, radius ~3.35cm)
 
 class BallPoseEstimation(Node):
     """
