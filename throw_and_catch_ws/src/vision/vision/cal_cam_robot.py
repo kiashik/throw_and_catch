@@ -29,6 +29,8 @@ visual verification like Ashik did in ee 471.
 
 """
 
+from sympy import true
+
 import rclpy
 from rclpy.node import Node
 import numpy as np
@@ -100,7 +102,6 @@ class CalCamRobot(Node):
             37: np.array([ax, ay - 0.1070, az + 0.6330]),      # tag_37
         }
 
-
         # TF listener to get camera -> tag transforms
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
@@ -110,6 +111,7 @@ class CalCamRobot(Node):
         
         self.timer = self.create_timer(2.0, self.compute_calibration)
         self.calibration_done = False
+
 
     def compute_calibration(self):
         """Collect camera positions and compute transformation."""
@@ -143,8 +145,10 @@ class CalCamRobot(Node):
                 self.get_logger().debug(f"Could not get transform for tag {tag_id}: {e}")
                 pass
         
+
+
         # Need at least 15 points for calibration
-        num_of_tags = 15    #TODO make this into a parameter to be given at launch time if we want
+        num_of_tags = 12    #TODO make this into a parameter to be given at launch time if we want
         if len(camera_points_list) >= num_of_tags:
             camera_points = np.array(camera_points_list)
             robot_points = np.array(robot_points_list)
