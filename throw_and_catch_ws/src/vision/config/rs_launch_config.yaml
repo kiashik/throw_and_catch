@@ -3,7 +3,7 @@ json_file_path: ""    # path to an optional configuration file.
 enable_color: true
 rgb_camera.color_profile: 848x480x30   # (1280x720x30), (1280, 800, 30), (424, 240, 90/60/30), (480, 270, 30/60/90), (630, 360, 30/60/90), (640x480x30/60), (848x480x30/60)
 rgb_camera.enable_auto_exposure: false
-rgb_camera.exposure: 30     # shutter speed
+rgb_camera.exposure: 45     # shutter speed
 
 enable_depth: true
 enable_infra: false
