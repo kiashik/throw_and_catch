@@ -12,7 +12,7 @@ class OpenCVROSNode(Node):
 
         self.bridge = CvBridge()
 
-        self.images_dir = Path(__file__).resolve().parent / 'd455_images' /'fps60'
+        self.images_dir = Path(__file__).resolve().parent / 'd455_images' /'dataset_3'
         self.images_dir.mkdir(parents=True, exist_ok=True)
         self.img_index = 0
 
@@ -26,8 +26,8 @@ class OpenCVROSNode(Node):
     def cb(self, msg: Image):
         frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
 
-        if self.img_index % 30 == 0:
-            image_path = self.images_dir / f'img_60fps_{self.img_index}.jpg'
+        if self.img_index % 10 == 0:
+            image_path = self.images_dir / f'img_{self.img_index}.jpg'
             self.get_logger().info(f"Saving image to: {image_path}")
             cv2.imwrite(str(image_path), frame)
         
