@@ -19,3 +19,7 @@ __pycache__/
 # Generated graphviz / pdf outputs
 **/frames_*.gv
 **/frames_*.pdf
+
+throw_and_catch_ws/ros_yolo_venv/
+throw_and_catch_ws/runs/
+throw_and_catch_ws/src/vision/vision/d455_images/
