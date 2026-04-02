@@ -13,8 +13,8 @@ depth_module.depth_profile: 848x480x30
 depth_module.exposure: 600
 depth_module.gain: 16
 depth_module.enable_auto_exposure: false
-depth_module.laser_power: 250  # 0 to 360 in steps of 30  (default is 150)
-depth_module.emitter_enabled: true 
+depth_module.laser_power: 250.0  #must be double (aka float in python) 0 to 360 in steps of 30  (default is 150)
+depth_module.emitter_enabled: 1 # 0=off, 1=on, 2=auto
 enable_sync: true
 enable_rgbd: true
 

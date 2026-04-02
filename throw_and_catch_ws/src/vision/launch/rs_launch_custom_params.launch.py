@@ -28,10 +28,7 @@ import rs_launch
 
 # these are the custom parameters that we are using for our throw and catch project.
 # note that the last parameter is the config file that lists most of the parameters
-local_parameters = [{'name': 'camera_name',         'default': 'camera', 'description': 'camera unique name'},
-                    {'name': 'camera_namespace',    'default': 'camera', 'description': 'camera namespace'},
-                    {'name': 'config_file',         'default': os.path.join(get_package_share_directory('vision'), 'config', 'rs_launch_config.yaml'), 'description': 'yaml config file for realsense camera'},
-
+local_parameters = [{'name': 'config_file',         'default': os.path.join(get_package_share_directory('vision'), 'config', 'rs_launch_config.yaml'), 'description': 'yaml config file for realsense camera'},
                     ]
 
 def set_configurable_parameters(local_params):
@@ -48,3 +45,5 @@ def generate_launch_description():
                 kwargs = {'params' : set_configurable_parameters(params)}
         )
     ])
+
+
