@@ -7,7 +7,7 @@ Subscribes to ball pose and commands arm to move toward it.
 
 how to run:
 1) Start robot bringup or Gazebo world with OMY-F3M and table:
-   ros2 launch open_manipulator_gazebo open_manipulator_gazebo.launch.py
+   ros2 launch open_manipulator_bringup omy_f3m_gazebo.launch.py
 
 3) Start this node to track the ball (this runs moveit and RViz too): 
     ros2 launch my_motion_planner track_ball.launch.py use_sim:=true
