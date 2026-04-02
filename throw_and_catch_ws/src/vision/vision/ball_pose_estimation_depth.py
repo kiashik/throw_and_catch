@@ -15,43 +15,44 @@ Or include it in a launch file. Requires:
 - RealSense camera node publishing aligned depth images and camera info
 
 --- Parameters / Configuration:
-- Ball detection topic: 'ball_detector/detection' (vision_msgs/BoundingBox2D)
+- Ball detection topic: 'vision/ball_detections' (vision_msgs/BoundingBox2D). must only publish a new msg when a ball is detected.
 - Depth image topic: '/camera/camera/aligned_depth_to_color/image_raw' (sensor_msgs/Image)
 - Camera info topic: '/camera/camera/aligned_depth_to_color/camera_info' (sensor_msgs/CameraInfo)
 - Color image topic: '/camera/camera/color/image_raw' (sensor_msgs/Image) - for visualization
-- Published topic: 'ball_pose_depth/pose' (geometry_msgs/PointStamped)
+- Published topic: 'vision/ball_pose_cam' (geometry_msgs/PointStamped)
 - Depth units: Typically millimeters (automatically converted to meters)
 
 
 --- Improvement
-TODO need to figure out what format(resolution ratio) is available for both  depth and rgb.
-TODO same as ball_pose_estimation using rgb and pnp, the last known ball location persists if ball disappears suddenly.
+04-01-2026: added a "visualize" parameter to enable/disable visualization. If 
+visualization is disabled, the node will not subscribe to the color image topic 
+or display the OpenCV window, which may improve speed.
 """
 
 import numpy as np
 import cv2
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import Point, PoseStamped
+from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import CameraInfo, Image
 from vision_msgs.msg import BoundingBox2D
 from cv_bridge import CvBridge
-import pyrealsense2 as rs
+import pyrealsense2 as rs       # used to get depth scale from RealSense camera, but if pyrealsense2 is not available, it will default to 0.001 m/unit which is typical for D400 series
 
-BALL_RADIUS = 0.033  # meters. used to adjust depth value from ball surface to balll center
+BALL_RADIUS = 0.033  # meters. used to adjust depth value from ball surface to ball center
 
 class BallPoseEstimationDepth(Node):
     """
     ROS2 node that estimates 3D position of a tennis ball using depth information.
     
     Subscribes to:
-        - 'ball_detector/detection' (vision_msgs/BoundingBox2D): Ball detection in image pixels
+        - 'vision/ball_detections' (vision_msgs/BoundingBox2D): Ball detection in image pixels
         - '/camera/camera/aligned_depth_to_color/image_raw' (sensor_msgs/Image): Depth image
         - '/camera/camera/aligned_depth_to_color/camera_info' (sensor_msgs/CameraInfo): Camera intrinsics
         - '/camera/camera/color/image_raw' (sensor_msgs/Image): Color image for visualization
     
     Publishes to:
-        - 'ball_pose_depth/pose' (geometry_msgs/PoseStamped): Ball position in camera frame
+        - 'vision/ball_pose_cam' (geometry_msgs/PoseStamped): Ball position in camera frame
     
     Displays:
         - OpenCV window showing ball position visualization (press 'q' to quit)
@@ -69,13 +70,15 @@ class BallPoseEstimationDepth(Node):
         """
         super().__init__('ball_pose_estimation_depth')
 
+        self.declare_parameter('visualize', False)
+
         # Initialize storage for camera parameters
         self.fx = None  # Focal length x
         self.fy = None  # Focal length y
         self.cx = None  # Principal point x
         self.cy = None  # Principal point y
         self.camera_frame_id = None
-        self.depth_scale = 0.001  # Depth scale in meters per unit (default for D400: 1mm)
+        self.depth_scale = 0.001  # meters. Depth scale in meters per unit (default for D400: 1mm)
         
         # Initialize storage for ball detection and depth
         self.ball_detection = None
@@ -89,7 +92,7 @@ class BallPoseEstimationDepth(Node):
         # Subscribe to ball detection from ball_detector node
         self.detection_sub = self.create_subscription(
             BoundingBox2D,
-            'ball_detector/detection',
+            'vision/ball_detections',
             self.detection_callback,
             10
         )
@@ -110,18 +113,22 @@ class BallPoseEstimationDepth(Node):
             10
         )
         
-        # Subscribe to color image for visualization
-        self.image_sub = self.create_subscription(
-            Image,
-            '/camera/camera/color/image_raw',
-            self.image_callback,
-            10
-        )
+        # Subscribe to color image for visualization if enabled
+        self.visualize = self.get_parameter('visualize').value
+        if self.visualize:
+            self.image_sub = self.create_subscription(
+                Image,
+                '/camera/camera/color/image_raw',
+                self.image_callback,
+                10
+            )
+        else:
+            self.get_logger().info('Visualization disabled; color image subscription not created.')
 
         # Publish ball 3D position in camera frame
         self.pose_pub_ = self.create_publisher(
             PoseStamped,
-            'ball_pose_estimation/pose',
+            'vision/ball_pose_cam',
             10
         )
 
@@ -286,7 +293,7 @@ class BallPoseEstimationDepth(Node):
             depth_m = depth_m + BALL_RADIUS  # Adjust depth to ball center by adding radius (since depth is to surface)
 
             if depth_m <= 0 or depth_m > 6.0:  # Sanity check (ball should be within 6m). Our room is like 8m wide.
-                self.get_logger().warn(f"Invalid depth value: {depth_m:.3f}m")
+                self.get_logger().warn(f"Invalid depth value: {depth_m:.3f}m. Ball must be within 6m of camera.")
                 return None
 
             # Ensure camera intrinsics are available
@@ -310,7 +317,7 @@ class BallPoseEstimationDepth(Node):
             pose_msg.pose.position.z = float(z)
 
             self.get_logger().info(
-                f"Ball position: x={x:.3f}m, y={y:.3f}m, z={z:.3f}m (depth={depth_m:.3f}m)"
+                f"Ball position: x={x:.3f}m, y={y:.3f}m, z={z:.3f}m)"
             )
 
             return pose_msg
@@ -359,14 +366,14 @@ class BallPoseEstimationDepth(Node):
                     depth_m = depth_raw * self.depth_scale
                     
                     # Display depth and 3D coordinates
-                    text = f"Depth: {depth_m:.3f}m"
-                    cv2.putText(vis_image, text, (u + 10, v - 10),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+                    # text = f"Depth: {depth_m:.3f}m"
+                    # cv2.putText(vis_image, text, (u + 10, v - 10),
+                    #            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
                     
                     if depth_m > 0 and self.cx is not None and self.cy is not None and self.fx is not None and self.fy is not None:
                         x = (u - self.cx) * depth_m / self.fx
                         y = (v - self.cy) * depth_m / self.fy
-                        coord_text = f"({x:.2f}, {y:.2f}, {depth_m:.2f})"
+                        coord_text = f"({x:.3f}, {y:.3f}, {depth_m:.3f})"
                         cv2.putText(vis_image, coord_text, (u + 10, v + 20),
                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 

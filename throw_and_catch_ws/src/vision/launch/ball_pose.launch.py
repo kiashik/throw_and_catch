@@ -9,14 +9,16 @@ This launch file:
 
 Usage:
   ros2 launch vision ball_pose.launch.py pose_estimation_method:=pnp
-  ros2 launch vision ball_pose.launch.py pose_estimation_method:=depth
+  ros2 launch vision ball_pose.launch.py pose_estimation_method:=depth visualize:=true
+
+Improvements:
+04-01-2026: Added 'visualize' parameter to enable/disable visualization in the depth-based pose estimation node.
 """
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
-
 
 def generate_launch_description():
     pose_estimation_method_arg = DeclareLaunchArgument(
@@ -25,7 +27,14 @@ def generate_launch_description():
         description='Method for pose estimation: "pnp" or "depth"'
     )
 
+    visualize_arg = DeclareLaunchArgument(
+        'visualize',
+        default_value='false',
+        description='Enable visualization in the depth-based pose estimation node'
+    )
+
     method = LaunchConfiguration('pose_estimation_method')
+    visualize = LaunchConfiguration('visualize')
 
     ball_detector = Node(
         package='vision',
@@ -47,6 +56,7 @@ def generate_launch_description():
         executable='ball_pose_estimation_depth',
         name='ball_pose_estimation_depth',
         output='screen',
+        parameters=[{'visualize': visualize}],
         condition=IfCondition(PythonExpression(["'", method, "' == 'depth'"])),
     )
 
