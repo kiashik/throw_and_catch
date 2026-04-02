@@ -29,7 +29,6 @@ visual verification like Ashik did in ee 471.
 
 """
 
-from sympy import true
 
 import rclpy
 from rclpy.node import Node
@@ -45,6 +44,9 @@ class CalCamRobot(Node):
     def __init__(self):
         super().__init__('cal_cam_robot')
 
+        self.declare_parameter('num_of_tags', 14)
+
+
         # reference point on the whiteboard in robot frame (x, y, z) in meters
         wx = -1.259
         wy = -0.436
@@ -56,6 +58,7 @@ class CalCamRobot(Node):
         az = wz
         
         # Define robot frame positions of each AprilTag (in robot base frame)
+        # EITHER USE TABLE TAGS FOR WHITEBOARD TAGS. not both. SET TAG SIZE in apriltag_ros pkg's cfg file.
         self.robot_points = {
             # 0 to 17 are 70mm tags on the table
             0: np.array([0.2370, -0.1450, 0.0]),      # tag_0 position in robot base frame
@@ -147,8 +150,8 @@ class CalCamRobot(Node):
         
 
 
-        # Need at least 15 points for calibration
-        num_of_tags = 12    #TODO make this into a parameter to be given at launch time if we want
+        # Need at least (below) points for calibration
+        num_of_tags = int(self.get_parameter('num_of_tags').value)    
         if len(camera_points_list) >= num_of_tags:
             camera_points = np.array(camera_points_list)
             robot_points = np.array(robot_points_list)
@@ -185,7 +188,7 @@ class CalCamRobot(Node):
                 #############
         else:
             if not self.calibration_done:
-                self.get_logger().warn(f"Waiting for tags... Got {len(camera_points_list)}/{num_of_tags} minimum")
+                self.get_logger().warning(f"Waiting for tags... Got {len(camera_points_list)}/{num_of_tags} minimum")
 
     def compute_transform_svd(self, camera_points, robot_points):
         """
