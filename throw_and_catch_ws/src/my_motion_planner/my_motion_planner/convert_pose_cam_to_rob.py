@@ -33,7 +33,7 @@ class BallPoseCamToRobot(Node):
         #subscription (camera frame pose)
         self.pose_sub = self.create_subscription(
             PoseStamped,
-            '/ball_pose_estimation/pose', 
+            '/vision/ball_pose_cam', 
             self.pose_callback, 
             10
         )
@@ -41,7 +41,7 @@ class BallPoseCamToRobot(Node):
         #publisher (robot frame pose)
         self.rob_pose_pub = self.create_publisher(
             PoseStamped, 
-            '/ball_pose_estimation/rob_pose', 
+            '/vision/ball_pose_robot', 
             10
         )
 
@@ -82,7 +82,7 @@ class BallPoseCamToRobot(Node):
         # Create new PoseStamped message
         rob_pose_msg = PoseStamped()
         rob_pose_msg.header.stamp = self.get_clock().now().to_msg()
-        rob_pose_msg.header.frame_id = "robot"   # change if needed
+        rob_pose_msg.header.frame_id = "link0"   # change if needed
 
         rob_pose_msg.pose.position.x = float(ball_in_robot[0])
         rob_pose_msg.pose.position.y = float(ball_in_robot[1])
