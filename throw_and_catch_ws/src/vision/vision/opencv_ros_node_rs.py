@@ -12,7 +12,7 @@ class OpenCVROSNode(Node):
 
         self.bridge = CvBridge()
 
-        self.images_dir = Path(__file__).resolve().parent / 'd455_images' /'dataset_3'
+        self.images_dir = Path(__file__).resolve().parent / 'd455_images' /'dataset_4'
         self.images_dir.mkdir(parents=True, exist_ok=True)
         self.img_index = 0
 

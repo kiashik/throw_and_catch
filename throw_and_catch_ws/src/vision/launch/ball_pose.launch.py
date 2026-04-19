@@ -7,9 +7,10 @@ This launch file:
    - 'pnp': Uses ball_pose_estimation (PnP-based)
    - 'depth': Uses ball_pose_estimation_depth (Depth-based)
 
-Usage:
+Usage (must run in venv):
   ros2 launch vision ball_pose.launch.py pose_estimation_method:=pnp
   ros2 launch vision ball_pose.launch.py pose_estimation_method:=depth visualize:=true
+  Note: by default, pose_estimation_method is depth, and visualize is true.
 
 Improvements:
 04-01-2026: Added 'visualize' parameter to enable/disable visualization in the depth-based pose estimation node.
@@ -29,7 +30,7 @@ def generate_launch_description():
 
     visualize_arg = DeclareLaunchArgument(
         'visualize',
-        default_value='false',
+        default_value='true',
         description='Enable visualization in the depth-based pose estimation node'
     )
 
@@ -41,6 +42,7 @@ def generate_launch_description():
         executable='ball_detector',
         name='ball_detector',
         output='screen',
+        # parameters=[{'visualize': visualize}],        # since pose estimation node is doing visualization, we don't need to pass this to the ball_detector node
     )
 
     ball_pose_estimation_pnp = Node(
@@ -62,6 +64,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         pose_estimation_method_arg,
+        visualize_arg,
         ball_detector,
         ball_pose_estimation_pnp,
         ball_pose_estimation_depth,

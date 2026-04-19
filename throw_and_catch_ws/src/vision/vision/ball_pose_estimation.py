@@ -99,7 +99,7 @@ class BallPoseEstimation(Node):
         # Subscribe to ball detection from ball_detector node
         self.detection_sub = self.create_subscription(
             BoundingBox2D,
-            'ball_detector/detection',
+            '/vision/ball_detections',
             self.detection_cb,
             10
         )
@@ -123,7 +123,7 @@ class BallPoseEstimation(Node):
         # Publish ball pose
         self.pose_pub_ = self.create_publisher(
             PoseStamped,
-            'ball_pose_estimation/pose',
+            '/vision/ball_pose_cam',
             10
         )
 

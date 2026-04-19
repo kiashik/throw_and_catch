@@ -44,7 +44,7 @@ class CalCamRobot(Node):
     def __init__(self):
         super().__init__('cal_cam_robot')
 
-        self.declare_parameter('num_of_tags', 14)
+        self.declare_parameter('num_of_tags', 12)
 
 
         # reference point on the whiteboard in robot frame (x, y, z) in meters

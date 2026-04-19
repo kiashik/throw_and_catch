@@ -6,11 +6,13 @@ Estimate the 3D pose (position) of a detected tennis ball in the camera frame us
 information from RealSense camera. This is simpler and faster than PnP, providing direct
 3D coordinates by combining 2D pixel location with depth measurement.
 
---- How to use:
+--- How to use (must run in venv):
 Run this node directly:
-    ros2 run vision ball_pose_detection_depth
+    ros2 run vision ball_pose_estimation_depth --ros-args -p visualize:=true
+    note: by default visualize is true.
 
-Or include it in a launch file. Requires:
+Or include it in a launch file. 
+--- Requires:
 - ball_detector node publishing ball centroids
 - RealSense camera node publishing aligned depth images and camera info
 
@@ -70,7 +72,7 @@ class BallPoseEstimationDepth(Node):
         """
         super().__init__('ball_pose_estimation_depth')
 
-        self.declare_parameter('visualize', False)
+        self.declare_parameter('visualize', True)
 
         # Initialize storage for camera parameters
         self.fx = None  # Focal length x
@@ -242,7 +244,7 @@ class BallPoseEstimationDepth(Node):
         self.color_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         
         # Visualize if we have a ball detection
-        if self.ball_detection is not None:
+        if self.ball_detection is not None and self.visualize:
             self.visualize_pose()
 
     def compute_3d_position(self) -> PoseStamped | None:
