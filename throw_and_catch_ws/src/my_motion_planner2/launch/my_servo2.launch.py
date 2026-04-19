@@ -1,5 +1,8 @@
 """
 ASHIK: adapted from https://github.com/moveit/moveit2/blob/main/moveit_ros/moveit_servo/launch/demo_ros_api.launch.py
+
+--- usage
+    ros2 launch my_motion_planner2 my_servo2.launch.py use_sim_time:=true 
 """
 
 import os
@@ -11,26 +14,46 @@ from launch.substitutions import LaunchConfiguration
 from launch_param_builder import ParameterBuilder, Path
 from moveit_configs_utils import MoveItConfigsBuilder
 from launch.launch_description_sources import PythonLaunchDescriptionSource  
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, ExecuteProcess  
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction, ExecuteProcess, RegisterEventHandler
+from launch.event_handlers import OnProcessStart
+
+
 
 def generate_launch_description():
 
     # Declare launch arguments
-    declared_arguments = [      # this not work . TODO
-        DeclareLaunchArgument(
+    declared_arguments = [     
+        DeclareLaunchArgument(      # TODO: this does not work rn
             'command_type',
-            default_value='2',
+            default_value='1',
             description='Servo command type: 0=joint, 1=twist, 2=pose',
+        ),
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='false',
+            description='Use simulation mode/time (true: Gazebo bringup, false: real bringup)',
         ),
     ]
 
-    bringup = IncludeLaunchDescription(  
+
+
+    bringup_gazebo = IncludeLaunchDescription(  
         PythonLaunchDescriptionSource(  
             os.path.join(  
                 get_package_share_directory("open_manipulator_bringup"),  
                 "launch", "omy_f3m_gazebo.launch.py"  
             )  
-        )  
+        ),
+        condition=IfCondition(LaunchConfiguration('use_sim_time')),
+    )
+    bringup_real = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("open_manipulator_moveit_config"),
+                "launch", "omy_f3m_moveit.launch.py"
+            )
+        ),
+        condition=UnlessCondition(LaunchConfiguration('use_sim_time')),
     )  
 
     # Get the absolute path to the URDF file from the description package
@@ -56,13 +79,11 @@ def generate_launch_description():
 
     # Launch Servo as a standalone node or as a "node component" for better latency/efficiency
     launch_as_standalone_node = LaunchConfiguration(
-        "launch_as_standalone_node", default="false"
+        "launch_as_standalone_node", default="true"
     )
     
-    # Choose command type: 0=joint, 1=twist, 2=pose
-    command_type = LaunchConfiguration(
-        "command_type", default="2"  # Default to pose commands
-    )
+    command_type = LaunchConfiguration("command_type")
+    use_sim_time = LaunchConfiguration("use_sim_time")
 
     # Get parameters for the Servo node
     servo_params = {
@@ -72,7 +93,7 @@ def generate_launch_description():
     }
 
     # This sets the update rate and planning group name for the acceleration limiting filter.
-    acceleration_filter_update_period = {"update_period": 0.01}
+    acceleration_filter_update_period = {"update_period": 0.005}
     planning_group_name = {"planning_group_name": "arm"}    # this name "arm" came from srdf file.
 
     # TODO: ignorning rviz for now. may need to provide math to rviz config file
@@ -112,7 +133,7 @@ def generate_launch_description():
                     moveit_config.planning_pipelines,
                     moveit_config.planning_scene_monitor,
                     moveit_config.sensors_3d,
-                    {"use_sim_time": True},
+                    {"use_sim_time": use_sim_time},
                 ],
                 condition=UnlessCondition(launch_as_standalone_node),
             ),
@@ -137,7 +158,7 @@ def generate_launch_description():
             moveit_config.planning_pipelines,
             moveit_config.planning_scene_monitor,
             moveit_config.sensors_3d,
-            {"use_sim_time": True},
+            {"use_sim_time": use_sim_time},
         ],
         output="screen",
         condition=IfCondition(launch_as_standalone_node),
@@ -151,16 +172,47 @@ def generate_launch_description():
                 "call",
                 "/servo_node/switch_command_type",
                 "moveit_msgs/srv/ServoCommandType",
-                f"{{command_type: {command_type}}}",
+                "{command_type: 1}",  # default to twist command
             ],
             output="screen",
+    )
+
+        # Set servo command type to TwistStamped after servo process starts.
+    set_command_type_for_component = RegisterEventHandler(
+        event_handler=OnProcessStart(
+            target_action=container,
+            on_start=[
+                TimerAction(
+                    period=8.0,
+                    actions=[set_command_type_action()],
+                )
+            ],
+        ),
+        condition=UnlessCondition(launch_as_standalone_node),
+    )
+
+    set_command_type_for_standalone = RegisterEventHandler(
+        event_handler=OnProcessStart(
+            target_action=servo_node,
+            on_start=[
+                TimerAction(
+                    period=8.0,
+                    actions=[set_command_type_action()],
+                )
+            ],
+        ),
+        condition=IfCondition(launch_as_standalone_node),
     )
 
 
     return launch.LaunchDescription(
         declared_arguments + [
-            bringup,  
+            bringup_gazebo,
+            # bringup_real,  
             # Delay servo start to let Gazebo and controllers initialize  
-            TimerAction(period=8.0, actions=[servo_node, container, set_command_type_action()]),  
+            TimerAction(period=12.0, actions=[servo_node, container]),  
+            set_command_type_for_standalone,
+            set_command_type_for_component,
+
         ]
-    )
+    )   
