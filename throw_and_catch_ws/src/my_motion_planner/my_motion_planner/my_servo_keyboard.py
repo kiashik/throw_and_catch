@@ -5,6 +5,11 @@ Keyboard teleop for MoveIt Servo Twist commands.
 Publishes geometry_msgs/TwistStamped on /servo_node/delta_twist_cmds.
 Default command frame is link0 (base frame).
 
+How to run:
+    ros2 run my_motion_planner my_servo_keyboard
+
+
+
 works in sim.
 """
 
@@ -25,9 +30,9 @@ class MyServoKeyboard(Node):
 
         self.declare_parameter("topic", "/servo_node/delta_twist_cmds")
         self.declare_parameter("frame_id", "link0")
-        self.declare_parameter("publish_rate", 30.0)
-        self.declare_parameter("linear_step", 0.02)
-        self.declare_parameter("angular_step", 0.3)
+        self.declare_parameter("publish_rate", 200.0)
+        self.declare_parameter("linear_step", 0.015)
+        self.declare_parameter("angular_step", 0.03)
 
         topic = self.get_parameter("topic").value
         self.frame_id = self.get_parameter("frame_id").value
