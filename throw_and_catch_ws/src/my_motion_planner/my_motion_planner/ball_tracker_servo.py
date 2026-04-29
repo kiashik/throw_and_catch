@@ -1,8 +1,10 @@
 """
-from kayla
+Ball Tracker Servo Node
+Works for sim and real.
 
 Improvements:
-    TODO : add logging of error 
+    04/28/2026 : added logging of error. saved to pickle for later visualization. 
+    also added joint velocity logging for later visualization. 
 """
 
 import numpy as np
@@ -65,11 +67,11 @@ class BallTracker(Node):
         self.dt = 0.005   # 200 Hz
         self.pid = PIDController(
             dt=self.dt,
-            p=get_float_param('pid_p', 3.5),
-            i=get_float_param('pid_i', 0.005),
+            p=get_float_param('pid_p', 4.2),
+            i=get_float_param('pid_i', 0.006),
             d=get_float_param('pid_d', 0.001),
         )
-        self.max_linear_velocity = get_float_param('max_linear_velocity', 0.4) # m/s
+        self.max_linear_velocity = get_float_param('max_linear_velocity', 1.5) # m/s
         self.near_goal_tolerance = get_float_param('near_goal_tolerance', 0.01) # m
 
 
