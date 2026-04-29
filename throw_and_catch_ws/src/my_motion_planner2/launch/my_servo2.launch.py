@@ -23,7 +23,7 @@ def generate_launch_description():
 
     # Declare launch arguments
     declared_arguments = [     
-        DeclareLaunchArgument(      # TODO: this does not work rn
+        DeclareLaunchArgument(      # TODO: this does not work rn, currently only deafult value works
             'command_type',
             default_value='1',
             description='Servo command type: 0=joint, 1=twist, 2=pose',
