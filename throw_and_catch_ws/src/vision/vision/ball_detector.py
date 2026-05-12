@@ -26,6 +26,10 @@ ball centroids. Ensure the camera node (e.g., RealSense or webcam) is running fi
 only published when a ball is detected, so if no ball is detected.
 Also created a parameter for visualization, so the user can choose to enable/disable 
 the OpenCV window showing the detections. disabling visualization can speed up inference.
+
+05-07-2026: added qos_profile to only keep the latest message for both subscriber 
+and publisher, since we only care about the latest ball pose and don't want to 
+process old messages.
 """
 
 
@@ -40,6 +44,7 @@ import cv2
 from ultralytics import YOLO
 from vision_msgs.msg import BoundingBox2D
 import torch
+from rclpy.qos import QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy
 
 
 class BallDetector(Node):
@@ -72,20 +77,26 @@ class BallDetector(Node):
         self.declare_parameter('image_topic', '/camera/camera/color/image_raw')
         self.declare_parameter('visualize', False)
         self.declare_parameter('visualization_rate', 30.0)
-        self.declare_parameter('confidence', 0.4)
+        self.declare_parameter('confidence', 0.6)
         self.declare_parameter('max_det', 1)
         self.declare_parameter('imgsz', [640, 640])
 
         self.bridge = CvBridge()
 
+        qos_profile = QoSProfile(
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+        )
+
         topic = self.get_parameter('image_topic').value
-        self.sub = self.create_subscription(Image, topic, self.cb, 10)
+        self.sub = self.create_subscription(Image, topic, self.cb, qos_profile)
 
         self.get_logger().info(f"Subscribing to: {topic}")
         self.get_logger().info("Press 'q' in the OpenCV window to quit.")
 
         # Create PUBLISHER for ball detection (centroid + bounding box)
-        self.ball_detection_publisher_ = self.create_publisher(BoundingBox2D, 'vision/ball_detections', 10)
+        self.ball_detection_publisher_ = self.create_publisher(BoundingBox2D, 'vision/ball_detections', qos_profile)
         self.ball_detection_msg = BoundingBox2D()
         self.latest_annotated_img = None
 
@@ -148,7 +159,7 @@ class BallDetector(Node):
             device=self.device,
             max_det=self.max_det,
             visualize=False,
-            show_boxes=True,
+            verbose=False,
             stream=False,
             show=False,
         )
