@@ -29,6 +29,10 @@ Or include it in a launch file.
 04-01-2026: added a "visualize" parameter to enable/disable visualization. If 
 visualization is disabled, the node will not subscribe to the color image topic 
 or display the OpenCV window, which may improve speed.
+
+05-07-2026: added qos_profile to only keep the latest message for both subscriber 
+and publisher, since we only care about the latest ball pose and don't want to 
+process old messages.
 """
 
 import numpy as np
@@ -40,6 +44,9 @@ from sensor_msgs.msg import CameraInfo, Image
 from vision_msgs.msg import BoundingBox2D
 from cv_bridge import CvBridge
 import pyrealsense2 as rs       # used to get depth scale from RealSense camera, but if pyrealsense2 is not available, it will default to 0.001 m/unit which is typical for D400 series
+
+from rclpy.qos import QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy
+
 
 BALL_RADIUS = 0.033  # meters. used to adjust depth value from ball surface to ball center
 
@@ -91,12 +98,18 @@ class BallPoseEstimationDepth(Node):
         # Bridge for ROS-OpenCV conversion
         self.bridge = CvBridge()
 
+        qos_profile = QoSProfile(
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+        )
+
         # Subscribe to ball detection from ball_detector node
         self.detection_sub = self.create_subscription(
             BoundingBox2D,
             'vision/ball_detections',
             self.detection_callback,
-            10
+            qos_profile
         )
 
         # Subscribe to aligned depth image
@@ -104,7 +117,7 @@ class BallPoseEstimationDepth(Node):
             Image,
             '/camera/camera/aligned_depth_to_color/image_raw',
             self.aligned_depth_callback,
-            10
+            qos_profile
         )
 
         # Subscribe to camera info to get intrinsic parameters
@@ -112,7 +125,7 @@ class BallPoseEstimationDepth(Node):
             CameraInfo,
             '/camera/camera/aligned_depth_to_color/camera_info',
             self.camera_info_callback,
-            10
+            qos_profile
         )
         
         # Subscribe to color image for visualization if enabled
@@ -122,7 +135,7 @@ class BallPoseEstimationDepth(Node):
                 Image,
                 '/camera/camera/color/image_raw',
                 self.image_callback,
-                10
+                qos_profile
             )
         else:
             self.get_logger().info('Visualization disabled; color image subscription not created.')
@@ -131,7 +144,7 @@ class BallPoseEstimationDepth(Node):
         self.pose_pub_ = self.create_publisher(
             PoseStamped,
             'vision/ball_pose_cam',
-            10
+            qos_profile
         )
 
         self.get_logger().info("Ball pose detection (depth-based) node started")
