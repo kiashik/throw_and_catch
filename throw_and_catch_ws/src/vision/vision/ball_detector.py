@@ -18,7 +18,7 @@ ball centroids. Ensure the camera node (e.g., RealSense or webcam) is running fi
 - Device: Auto-detects CUDA GPU if available, otherwise uses CPU.
 - YOLO parameters: conf=0.25 (confidence threshold), max_det=1 (detect at most 1 ball), etc.
 - Published topic: 
-    - 'vision/ball_detections' (vision_msgs/BoundingBox2D): centroid and bounding box
+    - 'vision/ball_detections' (vision_msgs/Detection2D): header-stamped detection with centroid and bounding box
 
     
 --- Improvements:
@@ -30,6 +30,11 @@ the OpenCV window showing the detections. disabling visualization can speed up i
 05-07-2026: added qos_profile to only keep the latest message for both subscriber 
 and publisher, since we only care about the latest ball pose and don't want to 
 process old messages.
+
+05-13-2026: changed pub msg from BoundingBox2D to Detection2D. Now header timestamp
+is the image capture time. Proper time will likely be very important for
+ball trajectory prediction.
+
 """
 
 
@@ -42,7 +47,7 @@ from cv_bridge import CvBridge
 import cv2
 
 from ultralytics import YOLO
-from vision_msgs.msg import BoundingBox2D
+from vision_msgs.msg import Detection2D
 import torch
 from rclpy.qos import QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy
 
@@ -56,7 +61,7 @@ class BallDetector(Node):
         - Image topic (configurable, default: 'webcam/image_raw') or
           '/camera/camera/color/image_raw' for RealSense camera.
     Publishes to:
-        - 'vision/ball_detections' (vision_msgs/BoundingBox2D): Ball centroid and width, height
+        - 'vision/ball_detections' (vision_msgs/Detection2D): Ball centroid and width, height
     
     Displays:
         - OpenCV window showing annotated detections (press 'q' to quit)
@@ -77,7 +82,7 @@ class BallDetector(Node):
         self.declare_parameter('image_topic', '/camera/camera/color/image_raw')
         self.declare_parameter('visualize', False)
         self.declare_parameter('visualization_rate', 30.0)
-        self.declare_parameter('confidence', 0.6)
+        self.declare_parameter('confidence', 0.40)
         self.declare_parameter('max_det', 1)
         self.declare_parameter('imgsz', [640, 640])
 
@@ -96,8 +101,7 @@ class BallDetector(Node):
         self.get_logger().info("Press 'q' in the OpenCV window to quit.")
 
         # Create PUBLISHER for ball detection (centroid + bounding box)
-        self.ball_detection_publisher_ = self.create_publisher(BoundingBox2D, 'vision/ball_detections', qos_profile)
-        self.ball_detection_msg = BoundingBox2D()
+        self.ball_detection_publisher_ = self.create_publisher(Detection2D, 'vision/ball_detections', qos_profile)
         self.latest_annotated_img = None
 
         # Load YOLO model
@@ -166,10 +170,11 @@ class BallDetector(Node):
 
         self.latest_annotated_img = results_yolo[0].plot() if len(results_yolo) > 0 else im
 
-        if self.get_ball_bbox(results_yolo):
-            self.ball_detection_publisher_.publish(self.ball_detection_msg)
+        detection_msg = self.get_ball_bbox(msg, results_yolo)
+        if detection_msg is not None:
+            self.ball_detection_publisher_.publish(detection_msg)
 
-    def get_ball_bbox(self, results_yolo):
+    def get_ball_bbox(self, image_msg: Image, results_yolo):
         """
         Extract ball detection from YOLO results and update the publisher message.
         
@@ -184,12 +189,14 @@ class BallDetector(Node):
         - If no balls: Log info message (detection not updated), return False.
         
         --- Side Effects:
-        Updates self.ball_detection_msg (BoundingBox2D) with:
-            - center.x: horizontal pixel coordinate of centroid (float)
-            - center.y: vertical pixel coordinate of centroid (float)
-            - center.theta: 0.0 (orientation not applicable for sphere)
-            - size_x: bounding box width in pixels (float)
-            - size_y: bounding box height in pixels (float)
+        Returns a Detection2D message with:
+            - header.stamp: copied from the input image capture time
+            - header.frame_id: copied from the input image frame
+            - bbox.center.position.x: horizontal pixel coordinate of centroid (float)
+            - bbox.center.position.y: vertical pixel coordinate of centroid (float)
+            - bbox.center.theta: 0.0 (orientation not applicable for sphere)
+            - bbox.size_x: bounding box width in pixels (float)
+            - bbox.size_y: bounding box height in pixels (float)
         
         --- Notes:
         - Data extracted from YOLO's xywh format (center_x, center_y, width, height)
@@ -203,23 +210,28 @@ class BallDetector(Node):
                 if len(r.boxes) > 1:
                     self.get_logger().warning(f"Multiple({len(r.boxes)}) balls detected. Using the first one.")
                 else:
-                    self.get_logger().info("One ball detected.")
+                    # self.get_logger().info("One ball detected.")
+                    pass
 
                 box = r.boxes.xywh[0].cpu().numpy()
                 
-                # Populate BoundingBox2D message
-                self.ball_detection_msg.center.position.x = float(box[0])  # x_center
-                self.ball_detection_msg.center.position.y = float(box[1])  # y_center
-                self.ball_detection_msg.center.theta = 0.0  # orientation (not meaningful for sphere)
-                self.ball_detection_msg.size_x = float(box[2])  # width in pixels
-                self.ball_detection_msg.size_y = float(box[3])  # height in pixels
-                return True
+                detection_msg = Detection2D()
+                detection_msg.header.stamp = image_msg.header.stamp
+                detection_msg.header.frame_id = image_msg.header.frame_id
+                detection_msg.bbox.center.position.x = float(box[0])  # x_center
+                detection_msg.bbox.center.position.y = float(box[1])  # y_center
+                detection_msg.bbox.center.theta = 0.0  # orientation (not meaningful for sphere)
+                detection_msg.bbox.size_x = float(box[2])  # width in pixels
+                detection_msg.bbox.size_y = float(box[3])  # height in pixels
+                return detection_msg
             else:
-                self.get_logger().info("No ball detected.")
+                # self.get_logger().info("No ball detected.")
+                pass
         else:
-            self.get_logger().info("Waiting for ball detection...")
+            # self.get_logger().info("Waiting for ball detection...")
+            pass
 
-        return False
+        return None
 
     def visualization_timer_cb(self):
         if self.latest_annotated_img is None:

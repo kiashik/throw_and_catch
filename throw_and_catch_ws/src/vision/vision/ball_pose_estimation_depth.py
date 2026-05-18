@@ -17,7 +17,7 @@ Or include it in a launch file.
 - RealSense camera node publishing aligned depth images and camera info
 
 --- Parameters / Configuration:
-- Ball detection topic: 'vision/ball_detections' (vision_msgs/BoundingBox2D). must only publish a new msg when a ball is detected.
+- Ball detection topic: 'vision/ball_detections' (vision_msgs/Detection2D). must only publish a new msg when a ball is detected.
 - Depth image topic: '/camera/camera/aligned_depth_to_color/image_raw' (sensor_msgs/Image)
 - Camera info topic: '/camera/camera/aligned_depth_to_color/camera_info' (sensor_msgs/CameraInfo)
 - Color image topic: '/camera/camera/color/image_raw' (sensor_msgs/Image) - for visualization
@@ -33,6 +33,10 @@ or display the OpenCV window, which may improve speed.
 05-07-2026: added qos_profile to only keep the latest message for both subscriber 
 and publisher, since we only care about the latest ball pose and don't want to 
 process old messages.
+
+05-13-2026: changed subed msg from BoundingBox2D to Detection2D for ball detection.
+    Now header timestamp is the image capture time. Proper time will likely be 
+    very important for ball trajectory prediction.
 """
 
 import numpy as np
@@ -41,21 +45,21 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import CameraInfo, Image
-from vision_msgs.msg import BoundingBox2D
+from vision_msgs.msg import Detection2D
 from cv_bridge import CvBridge
 import pyrealsense2 as rs       # used to get depth scale from RealSense camera, but if pyrealsense2 is not available, it will default to 0.001 m/unit which is typical for D400 series
 
 from rclpy.qos import QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy
 
 
-BALL_RADIUS = 0.033  # meters. used to adjust depth value from ball surface to ball center
+BALL_RADIUS = 0.0325  # meters. used to adjust depth value from ball surface to ball center
 
 class BallPoseEstimationDepth(Node):
     """
     ROS2 node that estimates 3D position of a tennis ball using depth information.
     
     Subscribes to:
-        - 'vision/ball_detections' (vision_msgs/BoundingBox2D): Ball detection in image pixels
+        - 'vision/ball_detections' (vision_msgs/Detection2D): Ball detection in image pixels
         - '/camera/camera/aligned_depth_to_color/image_raw' (sensor_msgs/Image): Depth image
         - '/camera/camera/aligned_depth_to_color/camera_info' (sensor_msgs/CameraInfo): Camera intrinsics
         - '/camera/camera/color/image_raw' (sensor_msgs/Image): Color image for visualization
@@ -106,7 +110,7 @@ class BallPoseEstimationDepth(Node):
 
         # Subscribe to ball detection from ball_detector node
         self.detection_sub = self.create_subscription(
-            BoundingBox2D,
+            Detection2D,
             'vision/ball_detections',
             self.detection_callback,
             qos_profile
@@ -220,13 +224,13 @@ class BallPoseEstimationDepth(Node):
         except Exception as e:
             self.get_logger().error(f"Error converting depth image: {str(e)}")
 
-    def detection_callback(self, msg: BoundingBox2D):
+    def detection_callback(self, msg: Detection2D):
         """
         Callback for ball detection messages.
         
         --- Parameters/Input:
-        msg : vision_msgs.msg.BoundingBox2D
-            Ball detection containing centroid and dimensions.
+        msg : vision_msgs.msg.Detection2D
+            Ball detection containing a header-stamped bounding box.
         
         --- Process:
         1. Store ball detection
@@ -283,8 +287,8 @@ class BallPoseEstimationDepth(Node):
 
         try:
             # Get pixel coordinates (ball centroid) (ensure within image bounds)
-            u = int(self.ball_detection.center.position.x)
-            v = int(self.ball_detection.center.position.y)
+            u = int(self.ball_detection.bbox.center.position.x)
+            v = int(self.ball_detection.bbox.center.position.y)
             
             height, width = self.depth_image.shape
             if u < 1 or u >= width - 1 or v < 1 or v >= height - 1:
@@ -324,16 +328,16 @@ class BallPoseEstimationDepth(Node):
 
             # Create PoseStamped message
             pose_msg = PoseStamped()
-            pose_msg.header.stamp = self.get_clock().now().to_msg()
+            pose_msg.header.stamp = self.ball_detection.header.stamp  # Use timestamp which is image capture time
             pose_msg.header.frame_id = self.camera_frame_id or 'camera_color_optical_frame'
             
             pose_msg.pose.position.x = float(x)
             pose_msg.pose.position.y = float(y)
             pose_msg.pose.position.z = float(z)
 
-            self.get_logger().info(
-                f"Ball position: x={x:.3f}m, y={y:.3f}m, z={z:.3f}m)"
-            )
+            # self.get_logger().info(
+            #     f"Ball position: x={x:.3f}m, y={y:.3f}m, z={z:.3f}m)"
+            # )
 
             return pose_msg
 
@@ -358,11 +362,11 @@ class BallPoseEstimationDepth(Node):
 
         # Draw ball detection
         if self.ball_detection is not None:
-            center = (int(self.ball_detection.center.position.x), int(self.ball_detection.center.position.y))
+            center = (int(self.ball_detection.bbox.center.position.x), int(self.ball_detection.bbox.center.position.y))
             
             # Calculate pixel radius from bounding box
-            if self.ball_detection.size_x > 0 and self.ball_detection.size_y > 0:
-                pixel_radius = int((self.ball_detection.size_x + self.ball_detection.size_y) / 4.0)
+            if self.ball_detection.bbox.size_x > 0 and self.ball_detection.bbox.size_y > 0:
+                pixel_radius = int((self.ball_detection.bbox.size_x + self.ball_detection.bbox.size_y) / 4.0)
             else:
                 pixel_radius = 50  # Fallback
             

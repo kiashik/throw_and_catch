@@ -34,7 +34,7 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Point, PoseStamped, Quaternion
 from sensor_msgs.msg import CameraInfo, Image
-from vision_msgs.msg import BoundingBox2D
+from vision_msgs.msg import Detection2D
 from cv_bridge import CvBridge
 
 import tf_transformations       # TODO: (kayla) on lap computer: sudo apt install ros-jazzy-tf-transformations. see doc string comment below  
@@ -62,7 +62,7 @@ class BallPoseEstimation(Node):
     ROS2 node that estimates 3D pose of a tennis ball using PnP algorithm.
     
     Subscribes to:
-        - '/ball_detector/detection' (vision_msgs/BoundingBox2D): Ball detection in image pixels
+        - '/ball_detector/detection' (vision_msgs/Detection2D): Ball detection in image pixels
         - '/camera/camera/color/camera_info' (sensor_msgs/CameraInfo): Camera intrinsics
         - '/camera/camera/color/image_raw' (sensor_msgs/Image): Camera image for visualization
     
@@ -98,7 +98,7 @@ class BallPoseEstimation(Node):
     
         # Subscribe to ball detection from ball_detector node
         self.detection_sub = self.create_subscription(
-            BoundingBox2D,
+            Detection2D,
             '/vision/ball_detections',
             self.detection_cb,
             10
@@ -165,13 +165,13 @@ class BallPoseEstimation(Node):
             # self.destroy_subscription(self.camera_info_sub)
             # self.get_logger().info("Unsubscribed from camera_info (intrinsics cached)")
 
-    def detection_cb(self, msg: BoundingBox2D):
+    def detection_cb(self, msg: Detection2D):
         """
         Callback for ball detection messages.
         
         --- Parameters/Input:
-        msg : vision_msgs.msg.BoundingBox2D
-            Ball detection containing centroid (center) and dimensions (size_x, size_y).
+        msg : vision_msgs.msg.Detection2D
+            Ball detection containing a header-stamped bounding box in msg.bbox.
         
         --- Process:
         1. Store ball detection
@@ -247,17 +247,17 @@ class BallPoseEstimation(Node):
             ], dtype=np.float64)
 
             # Image points: centroid and boundary points derived from bounding box
-            if self.ball_detection.size_x > 0 and self.ball_detection.size_y > 0:
+            if self.ball_detection.bbox.size_x > 0 and self.ball_detection.bbox.size_y > 0:
                 # Use average of width/height as diameter, then divide by 2 for radius
-                pixel_radius = (self.ball_detection.size_x + self.ball_detection.size_y) / 4.0
+                pixel_radius = (self.ball_detection.bbox.size_x + self.ball_detection.bbox.size_y) / 4.0
             else:
                 # Fallback to estimated value if bbox not available
                 pixel_radius = 50.0     # TODO is this reasonable? we should probably just raise an error and stop the program if this ever happends.
                 self.get_logger().warn("Bounding box dimensions invalid, using estimated pixel radius")
             
-            # Extract centroid from BoundingBox2D
-            centroid_x = self.ball_detection.center.position.x
-            centroid_y = self.ball_detection.center.position.y
+            # Extract centroid from Detection2D bbox
+            centroid_x = self.ball_detection.bbox.center.position.x
+            centroid_y = self.ball_detection.bbox.center.position.y
             
             image_points = np.array([
                 [centroid_x, centroid_y],                             # Center
@@ -293,7 +293,7 @@ class BallPoseEstimation(Node):
 
             # Create PoseStamped message
             pose_msg = PoseStamped()
-            pose_msg.header.stamp = self.get_clock().now().to_msg()         # this can be used to check if the pose is recent. see improvement 1
+            pose_msg.header.stamp = self.ball_detection.header.stamp  # Use timestamp from detection (image capture time)
             pose_msg.header.frame_id = self.camera_frame_id or 'camera_color_optical_frame'
             
             pose_msg.pose.position.x = float(tvec[0][0])        # ROS2 msg needs float
@@ -331,13 +331,13 @@ class BallPoseEstimation(Node):
         vis_image = self.latest_image.copy()
 
         # Calculate pixel radius from bounding box (same as in estimate_ball_pose_pnp)
-        if self.ball_detection.size_x > 0 and self.ball_detection.size_y > 0:
-            pixel_radius = int((self.ball_detection.size_x + self.ball_detection.size_y) / 4.0)
+        if self.ball_detection.bbox.size_x > 0 and self.ball_detection.bbox.size_y > 0:
+            pixel_radius = int((self.ball_detection.bbox.size_x + self.ball_detection.bbox.size_y) / 4.0)
         else:
             pixel_radius = 50  # Fallback
         
         # Draw ball centroid and bounding circle
-        center = (int(self.ball_detection.center.position.x), int(self.ball_detection.center.position.y))
+        center = (int(self.ball_detection.bbox.center.position.x), int(self.ball_detection.bbox.center.position.y))
         cv2.circle(vis_image, center, radius=5, color=(255, 0, 0), thickness=-1)
         cv2.circle(vis_image, center, radius=pixel_radius, color=(255, 0, 0), thickness=2)  # Actual detected boundary
 
