@@ -1,15 +1,15 @@
 json_file_path: ""    # path to an optional configuration file.
 
 enable_color: true
-rgb_camera.color_profile: 640x480x60   # (1280x720x30), (1280, 800, 30), (424, 240, 90/60/30), (480, 270, 30/60/90), (630, 360, 30/60/90), (640x480x30/60), (848x480x30/60)
+rgb_camera.color_profile: 848x480x60   # (1280x720x30), (1280, 800, 30), (424, 240, 90/60/30), (480, 270, 30/60/90), (630, 360, 30/60/90), (640x480x30/60), (848x480x30/60)
 rgb_camera.enable_auto_exposure: true
-rgb_camera.exposure: 38     # shutter speed
+rgb_camera.exposure: 5     # shutter speed
 
 enable_depth: true
 enable_infra: false
 enable_infra1: false
 enable_infra2: false
-depth_module.depth_profile: 640x480x60
+depth_module.depth_profile: 848x480x60
 depth_module.exposure: 600
 depth_module.gain: 16
 depth_module.enable_auto_exposure: false
@@ -29,3 +29,40 @@ colorizer.enable: false
 
 publish_tf: true
 tf_publish_rate: 0.0
+
+
+#ashik@ashik-Legion-S7-15ACH6:~/throw_and_catch/throw_and_catch/throw_and_catch_ws$ ros2 param describe /camera/camera rgb_camera.color_profile 
+# Parameter name: rgb_camera.color_profile
+#   Type: string
+#   Description: Available options are:
+# 1280x720x10
+# 1280x720x15
+# 1280x720x30
+# 1280x720x5
+# 1280x800x10
+# 1280x800x15
+# 1280x800x30
+# 1280x800x5
+# 424x240x15
+# 424x240x30
+# 424x240x5
+# 424x240x60
+# 424x240x90
+# 480x270x15
+# 480x270x30
+# 480x270x5
+# 480x270x60
+# 480x270x90
+# 640x360x15
+# 640x360x30
+# 640x360x5
+# 640x360x60
+# 640x360x90
+# 640x480x15
+# 640x480x30
+# 640x480x5
+# 640x480x60
+# 848x480x15
+# 848x480x30
+# 848x480x5
+# 848x480x60
