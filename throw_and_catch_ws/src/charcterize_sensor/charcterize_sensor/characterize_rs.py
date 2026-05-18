@@ -10,7 +10,6 @@ of the sensor. The mu printed to the terminal is not the bias. The bias if the
 printed to the terminal.
 
 
-
 Taking lots of inspiration from EE 471 lab 2.
 
 --- Parameters/ Configurations:
@@ -38,7 +37,7 @@ class CharacterizeRealSenseD455(Node):
 
 
         # number of samples to collect while characterizing.
-        self.declare_parameter('specifiedSamples', 2000)
+        self.declare_parameter('specifiedSamples', 1000)
         samples = self.get_parameter("specifiedSamples").get_parameter_value().integer_value
 
         # accumulated ball position readings for plotting and calculating stats.
@@ -109,7 +108,7 @@ class CharacterizeRealSenseD455(Node):
         self.get_logger().warn(f"mu: {mu}")
         self.get_logger().warn(f"var: {var}")
 
-        num_bins = 300
+        num_bins = 150
         fig, axes =plt.subplots(3,1, layout="constrained")
         axes[0].hist(self.positionData[:,0], bins=num_bins)
         axes[0].set_ylabel("samples")
