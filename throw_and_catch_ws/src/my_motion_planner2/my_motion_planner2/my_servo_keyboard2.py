@@ -31,8 +31,8 @@ class MyServoKeyboard(Node):
         self.declare_parameter("topic", "/servo_node/delta_twist_cmds")
         self.declare_parameter("frame_id", "link0")
         self.declare_parameter("publish_rate", 200.0)
-        self.declare_parameter("linear_step", 1.0)
-        self.declare_parameter("angular_step", 0.3)
+        self.declare_parameter("linear_step", 2.0)
+        self.declare_parameter("angular_step", 0.5)
 
         topic = self.get_parameter("topic").value
         self.frame_id = self.get_parameter("frame_id").value

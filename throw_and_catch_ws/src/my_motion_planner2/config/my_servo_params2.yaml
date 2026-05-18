@@ -13,7 +13,7 @@ max_expected_latency: 0.1  # delay between sending a command and the robot execu
 
 command_in_type: "speed_units"  # "unitless"> in the range [-1:1], as if from joystick. "speed_units"> cmds are in m/s and rad/s
 scale:
-  linear: 1.5    # "Max linear velocity in m/s if using speed units or tracking a pose, else a scaling factor on the unitless commanded velocity. Used for Cartesian and pose tracking commands."
+  linear: 10.5    # "Max linear velocity in m/s if using speed units or tracking a pose, else a scaling factor on the unitless commanded velocity. Used for Cartesian and pose tracking commands."
   rotational: 0.5 #"Max angular velocity in rad/s if using speed units or tracking a pose, else a scaling factor on the unitless commanded velocity. Used for Cartesian and pose tracking commands."
   joint: 0.2  # "Joint angular/linear velocity scale. Only used for unitless joint commands."
 
@@ -58,7 +58,7 @@ status_topic: ~/status  # Publish status to this topic
 command_out_topic: /arm_controller/joint_trajectory  # Publish outgoing commands here
 
 ## Collision checking for the entire robot body
-check_collisions: true  # Check collisions?
+check_collisions: false  # Check collisions
 collision_check_rate: 50.0  # [Hz] Collision-checking can easily bog down a CPU if done too often.
-self_collision_proximity_threshold: 0.01  # Start decelerating when a self-collision is this far [m]
-scene_collision_proximity_threshold: 0.01  # Start decelerating when a scene collision is this far [m]
+self_collision_proximity_threshold: 0.02  # Start decelerating when a self-collision is this far [m]
+scene_collision_proximity_threshold: 0.02  # Start decelerating when a scene collision is this far [m]

@@ -31,7 +31,8 @@ setup(
         'console_scripts': [
             'servo_test_node=my_motion_planner2.servo_test_node:main',
             'servo_test_pose=my_motion_planner2.servo_test_pose:main',
-            'my_servo_keyboard2=my_motion_planner2.my_servo_keyboard2:main'
+            'my_servo_keyboard2=my_motion_planner2.my_servo_keyboard2:main',
+            'ball_tracker_servo=my_motion_planner2.ball_tracker_servo:main',
         ],
     },
 )
