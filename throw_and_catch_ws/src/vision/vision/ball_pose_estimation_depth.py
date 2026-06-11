@@ -39,7 +39,20 @@ process old messages.
     very important for ball trajectory prediction.
 """
 
+import os
 import numpy as np
+
+# OpenCV's Qt HighGUI backend may look for bundled fonts under cv2/qt/fonts,
+# which is not always present in venv installs. Point Qt at system fonts first.
+if 'QT_QPA_FONTDIR' not in os.environ:
+    for font_dir in (
+        '/usr/share/fonts/truetype/dejavu',
+        '/usr/share/fonts/dejavu',
+    ):
+        if os.path.isdir(font_dir):
+            os.environ['QT_QPA_FONTDIR'] = font_dir
+            break
+
 import cv2
 import rclpy
 from rclpy.node import Node
@@ -53,6 +66,7 @@ from rclpy.qos import QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy
 
 
 BALL_RADIUS = 0.0325  # meters. used to adjust depth value from ball surface to ball center
+MAX_DEPTH_FROM_CAMERA = 5.5  # meters. if depth is greater than this, we consider it invalid (our room is like 8m wide, so ball should never be more than 5.5m away)
 
 class BallPoseEstimationDepth(Node):
     """
@@ -311,8 +325,8 @@ class BallPoseEstimationDepth(Node):
             depth_m = depth_raw * self.depth_scale  # Convert raw depth units to meters using depth scale
             depth_m = depth_m + BALL_RADIUS  # Adjust depth to ball center by adding radius (since depth is to surface)
 
-            if depth_m <= 0 or depth_m > 6.0:  # Sanity check (ball should be within 6m). Our room is like 8m wide.
-                self.get_logger().warn(f"Invalid depth value: {depth_m:.3f}m. Ball must be within 6m of camera.")
+            if depth_m <= 0 or depth_m > MAX_DEPTH_FROM_CAMERA:  # Sanity check (ball should be within MAX_DEPTH_FROM_CAMERAm). Our room is like 8m wide.
+                self.get_logger().warn(f"Invalid depth value: {depth_m:.3f}m. Ball must be within {MAX_DEPTH_FROM_CAMERA}m of camera.")
                 return None
 
             # Ensure camera intrinsics are available

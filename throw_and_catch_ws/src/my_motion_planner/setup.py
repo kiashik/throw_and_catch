@@ -31,8 +31,13 @@ setup(
         'console_scripts': [
             "convert_pose_cam_to_rob = my_motion_planner.convert_pose_cam_to_rob:main",
             "track_ball = my_motion_planner.track_ball:main",
-            "fake_pub_delta_twist = my_motion_planner.fake_pub_delta_twist:main",
             "my_servo_keyboard = my_motion_planner.my_servo_keyboard:main",
+            "fake_pub_delta_twist = my_motion_planner.fake_pub_delta_twist:main",
+            "fake_ball_pose_robot = my_motion_planner.fake_ball_pose_robot:main",
+            "fake_ball_pose_robot_cir = my_motion_planner.fake_ball_pose_robot_cir:main",
+            "ball_tracker_servo = my_motion_planner.ball_tracker_servo:main",
+            "ball_trajectory_planner = my_motion_planner.ball_trajectory_planner:main",
+            "optimized_ball_trajectory_planner = my_motion_planner.optimized_ball_trajectory_planner:main",
         ],
     },
 )

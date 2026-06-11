@@ -18,9 +18,9 @@ class FakeBallPoseRobotCir(Node):
         self.publisher = self.create_publisher(PoseStamped, '/vision/ball_pose_robot', 10)
         self.timer = self.create_timer(pub_period, self.timer_callback)
 
-        self.center = [0.0, -0.6, 0.3]
+        self.center = [0.0, -0.4, 0.1]
         self.radius = 0.2
-        self.angular_speed = 2.0 * math.pi / 5.50  # rad/s: full circle in 5.5 seconds
+        self.angular_speed = 2.0 * math.pi / 3.0  # rad/s: full circle in 3.0 seconds
         self.angle = 0.0
         self.position = [
             self.center[0] + self.radius,

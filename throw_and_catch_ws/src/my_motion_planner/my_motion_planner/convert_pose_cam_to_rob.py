@@ -9,11 +9,19 @@ Purpose:
 
     -- requires: camera_robot_calibration.npy in vision/config --> to get transf matrix
 
+Improvements:
+05-07-2026: added qos_profile to only keep the latest message for both subscriber 
+and publisher, since we only care about the latest ball pose and don't want to 
+process old messages.
+
+05-13-2026: now pub msg header timestamp is the sub header time stamp (which is 
+    image capture time.) Proper time will likely be very important for ball trajectory prediction.
 '''
 
 
 import rclpy
 from rclpy.node import Node 
+from rclpy.qos import QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy
 from geometry_msgs.msg import PoseStamped 
 import numpy as np 
 import os 
@@ -29,20 +37,26 @@ class BallPoseCamToRobot(Node):
         self.camera_robot_tf = self.load_camera_robot_tf()
         self.get_logger().info(f"Loaded camera -> robot transform:\n{self.camera_robot_tf}")
 
+        qos_profile = QoSProfile(
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+        )
+
 
         #subscription (camera frame pose)
         self.pose_sub = self.create_subscription(
             PoseStamped,
             '/vision/ball_pose_cam', 
             self.pose_callback, 
-            10
+            qos_profile
         )
 
         #publisher (robot frame pose)
         self.rob_pose_pub = self.create_publisher(
             PoseStamped, 
             '/vision/ball_pose_robot', 
-            10
+            qos_profile
         )
 
         self.get_logger().info("Ball Pose camera -> robot transform node started")
@@ -81,7 +95,7 @@ class BallPoseCamToRobot(Node):
 
         # Create new PoseStamped message
         rob_pose_msg = PoseStamped()
-        rob_pose_msg.header.stamp = self.get_clock().now().to_msg()
+        rob_pose_msg.header.stamp = msg.header.stamp  # Use the same timestamp which is image capture time
         rob_pose_msg.header.frame_id = "link0"   # change if needed
 
         rob_pose_msg.pose.position.x = float(ball_in_robot[0])

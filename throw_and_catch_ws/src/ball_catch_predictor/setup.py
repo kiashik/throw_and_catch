@@ -24,6 +24,7 @@ setup(
         'console_scripts': [
             'catch_predictor = ball_catch_predictor.catch_predictor_node:main',
             'catch_predictor_v3 = ball_catch_predictor.catch_predictor_nodeV3:main',
+            'catch_point_to_movel = ball_catch_predictor.catch_point_to_movel:main',
         ],
     },
 )

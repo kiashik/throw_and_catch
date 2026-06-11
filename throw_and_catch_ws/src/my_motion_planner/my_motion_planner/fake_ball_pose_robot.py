@@ -18,20 +18,19 @@ class FakeBallPoseRobot(Node):
         self.publisher = self.create_publisher(PoseStamped, '/vision/ball_pose_robot', 10)
         self.timer = self.create_timer(pub_period, self.timer_callback)
 
-        self.step_distance = 0.01
-        self.position = [0.0, -0.4, 0.0]
-
+        self.step_distance = 0.1
+        # self.position = [0.0, -0.4, 0.0]
         # self.waypoints = [
         #     [0.0, -0.4, 0.6],
         #     [-0.3, -0.4, 0.3],
         #     [0.3, -0.4, 0.3],
         # ]
 
-        self.position = [0.0, -0.6, 0.0]
+        self.position = [0.0, -0.4, 0.3]
         self.waypoints = [
-            [0.0, -0.6, 0.8],
-            [-0.4, -0.6, 0.4],
-            [0.4, -0.6, 0.4],
+            [0.0, -0.4, 0.3],
+            [-0.3, -0.4, 0.3],
+            [0.3, -0.4, 0.3],
         ]
         
         self.current_index = 0

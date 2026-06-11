@@ -18,6 +18,9 @@ from tf2_ros import Buffer, TransformListener
 from sensor_msgs.msg import JointState
 import pickle
 
+from rclpy.action import ActionClient
+from control_msgs.action import GripperCommand
+
 class PIDController:
     """
     PID controller for position-based visual servoing.
@@ -54,6 +57,7 @@ class PIDController:
         
         return PID
 
+MAX_LINEAR_VELOCITY = 5.0 # m/s, safety clamp for servo output
 
 class BallTracker(Node):
     def __init__(self):
@@ -67,11 +71,11 @@ class BallTracker(Node):
         self.dt = 0.005   # 200 Hz
         self.pid = PIDController(
             dt=self.dt,
-            p=get_float_param('pid_p', 47.2), # 4.2 is good for tracking with ball in hand. 35.2 
+            p=get_float_param('pid_p', MAX_LINEAR_VELOCITY), # 4.2 is good for tracking with ball in hand. 35.2 
             i=get_float_param('pid_i', 0.1),
             d=get_float_param('pid_d', 0.6),
         )
-        self.max_linear_velocity = get_float_param('max_linear_velocity', 10.0) # m/s
+        self.max_linear_velocity = get_float_param('max_linear_velocity', MAX_LINEAR_VELOCITY) # m/s
         self.near_goal_tolerance = get_float_param('near_goal_tolerance', 0.01) # m
 
 
@@ -82,19 +86,19 @@ class BallTracker(Node):
 
 
         # Subscriber to real-time ball pose topic
-        # self.ball_pose_sub = self.create_subscription(
-        #     PoseStamped,
-        #     '/vision/ball_pose_robot',
-        #     self.ball_callback,
-        #     10
-        # )
-
         self.ball_pose_sub = self.create_subscription(
             PoseStamped,
-            '/vision/catch_point',
+            '/vision/ball_pose_robot',
             self.ball_callback,
             10
         )
+
+        # self.ball_pose_sub = self.create_subscription(
+        #     PoseStamped,
+        #     '/vision/catch_point',
+        #     self.ball_callback,
+        #     10
+        # )
 
         # Publisher to MoveIt Servo
         self.twist_pub = self.create_publisher(
@@ -130,6 +134,21 @@ class BallTracker(Node):
         )
         self.current_q_dot = None
         # ------------------------------
+
+        # ------ gripper -----------
+        self._gripper_client = ActionClient(
+            self, GripperCommand, "/gripper_controller/gripper_cmd"
+        )
+
+    def _send_gripper_goal(self, position: float, max_effort: float = 10.0):
+        """Non-blocking gripper command. Silently skips if action server not available."""
+        if not self._gripper_client.wait_for_server(timeout_sec=0.1):
+            self.get_logger().warn("Gripper action server not available")
+            return
+        goal = GripperCommand.Goal()
+        goal.command.position = position
+        goal.command.max_effort = max_effort
+        self._gripper_client.send_goal_async(goal)
 
     def joint_states_cb(self, msg: JointState):
         self.current_q_dot = list(msg.velocity)
@@ -206,14 +225,29 @@ class BallTracker(Node):
             self.get_logger().warn("No end-effector pose available")
             return
 
-        error = target_position - ee_pos
+        error = np.array(target_position) - np.array(ee_pos)
+        error_mag = np.linalg.norm(error)
 
+        ## ---- gripper ----
+        if  error_mag < 0.10:   # if close enough, close gripper to catch ball
+            self._send_gripper_goal(position=0.55)  # close gripper (max position is 1.14)
+        else:
+            self._send_gripper_goal(position=0.0)  # open gripper (adjust as needed)
+        
+        
+        # -----------------
+
+
+        error = error / error_mag
+        velocity = MAX_LINEAR_VELOCITY * error
+
+        
 
         # Stop if very close
-        if np.linalg.norm(error) < self.near_goal_tolerance:
-            velocity = np.zeros(3)
-        else:
-            velocity = self.pid.compute(error)
+        # if np.linalg.norm(error) < self.near_goal_tolerance:
+        #     velocity = np.zeros(3)
+        # else:
+        #     velocity = self.pid.compute(error)
 
         # Safety clamp (VERY IMPORTANT)
         velocity = np.clip(velocity, -self.max_linear_velocity, self.max_linear_velocity)
@@ -233,7 +267,7 @@ class BallTracker(Node):
         twist_msg.twist.angular.x = 0.0
         twist_msg.twist.angular.y = 0.0
         twist_msg.twist.angular.z = 0.0
-
+        self.get_logger().info(f"Publishing twist: linear=({velocity[0]:.3f}, {velocity[1]:.3f}, {velocity[2]:.3f})")
 
         self.twist_pub.publish(twist_msg)
 
