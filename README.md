@@ -183,6 +183,47 @@ If you use a Python virtual environment for YOLO/Ultralytics, activate it before
 
 TODO: Add the final virtual environment setup command, if the project requires one.
 
+## Physical Hardware Setup
+
+This project uses two computers when running on the physical OpenMANIPULATOR-Y hardware.
+
+### USER PC
+
+The USER PC is the external development computer that runs:
+
+- RealSense camera drivers
+- Ball detection and pose estimation
+- Trajectory prediction
+- Motion planning and tracking nodes
+- RViz visualization and debugging tools
+
+### ROBOT PC
+
+The ROBOT PC is located onboard the OpenMANIPULATOR-Y platform and runs:
+
+- Robot hardware drivers
+- Dynamixel communication
+- MoveIt Servo
+- Robot state publishing
+- Hardware bringup
+
+### Network Requirements
+
+The USER PC and ROBOT PC must be connected to the same network.
+
+For physical hardware operation, an Ethernet connection between the USER PC and ROBOT PC is recommended.
+
+Both computers must use the same ROS 2 Domain ID: 
+
+```bash
+export ROS_DOMAIN_ID=30
+```
+Verify that the same value is configured on both machines before launching the system.
+
+For complete OpenMANIPULATOR-Y hardware setup instructions, refer to the official ROBOTIS documentation:
+
+https://ai.robotis.com/omy/setup_guide_omy.html
+
 ## Running the system
 
 The system is modular. Run each subsystem in a separate terminal after sourcing the workspace:
@@ -192,6 +233,50 @@ source /opt/ros/jazzy/setup.bash
 cd throw_and_catch/throw_and_catch_ws
 source install/setup.bash
 ```
+### 0. Bring up the physical robot
+
+This step is only required when running on physical hardware.
+
+All commands in this section are executed on the **ROBOT PC**.
+
+SSH into the robot:
+
+```bash
+ssh root@omy-<ROBOT_SERIAL_NUMBER>.local
+```
+
+Enter the OMY Docker container:
+
+```bash
+cd /data/docker/open_manipulator
+./docker/container.sh enter
+```
+
+Source the ROS 2 workspace:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/ros2_ws/install/setup.bash
+```
+
+If the robot is currently packed, unpack it first:
+
+```bash
+ros2 launch open_manipulator_bringup omy_f3m_unpack.launch.py
+```
+
+Then launch the robot hardware:
+
+```bash
+ros2 launch open_manipulator_bringup omy_f3m.launch.py
+```
+
+The robot should now be visible on the ROS 2 network and ready to receive commands from the USER PC.
+
+For additional hardware setup details, see:
+
+https://ai.robotis.com/omy/setup_guide_omy.html
+
 
 ### 1. Start the RealSense D455 camera
 
@@ -260,7 +345,29 @@ The current YOLO detector loads this model from the installed `vision` package s
 yolo_models/yolo26n_my_ds_v2_best.engine
 ```
 
-TODO: Add instructions for regenerating the TensorRT `.engine` model from the trained `.pt` model if running on a different GPU. link to ultralysics
+#### Tracking a ball in hand
+
+This launch file can be used to verify that the vision system is operating correctly before attempting full ball-catching experiments.
+
+With the RealSense camera running, hold a tennis ball in front of the camera and launch the ball pose estimation pipeline. The system should detect the tennis ball, estimate its 3D position, and publish the ball pose in both the camera frame and robot frame.
+
+Useful debugging commands:
+
+```bash
+ros2 topic echo /vision/ball_pose_cam
+
+ros2 topic echo /vision/ball_pose_robot
+
+rviz2
+```
+
+If the ball pose is not being published, verify that:
+
+1. The camera node is running.
+2. The USER PC and ROBOT PC are connected to the same network.
+3. Both computers use the same ROS_DOMAIN_ID.
+4. The camera-to-robot calibration file has been generated.
+
 
 ### 4. Start catch-point prediction
 
@@ -346,6 +453,69 @@ ros2 run charcterize_sensor characterize_rs
 ```
 
 TODO: Add the required setup for the characterization test, including where to place the ball, how many samples to collect, and where results are saved. link to pdf
+
+### Verify Ball Tracking
+
+Before attempting ball-catching experiments, verify that the complete tracking pipeline is functioning correctly.
+
+Start the required system components:
+
+```bash
+ros2 launch vision rs_launch_custom_params.launch.py
+```
+
+```bash
+ros2 launch vision ball_pose.launch.py pose_estimation_method:=depth visualize:=false
+```
+
+```bash
+ros2 run ball_catch_predictor catch_predictor --ros-args -p catch_y:=-0.45
+```
+
+```bash
+ros2 launch my_motion_planner2 my_servo2.launch.py use_sim_time:=false
+```
+
+```bash
+ros2 run my_motion_planner2 ball_tracker_servo
+```
+
+With all nodes running, slowly move a tennis ball throughout the camera field of view.
+
+The robot end-effector should continuously track the predicted catch point generated from the observed ball position. The motion should appear smooth and responsive, with the end-effector following the ball as it moves through the workspace.
+
+Useful debugging commands:
+
+```bash
+ros2 topic echo /vision/ball_pose_robot
+```
+
+```bash
+ros2 topic echo /vision/catch_point
+```
+
+```bash
+rviz2
+```
+
+Verify the following:
+
+1. The tennis ball is detected consistently.
+2. `/vision/ball_pose_robot` publishes valid robot-frame ball positions.
+3. `/vision/catch_point` publishes predicted interception points.
+4. RViz displays the predicted trajectory markers.
+5. The robot end-effector follows the published catch point.
+
+If the robot does not move, verify that:
+
+* The robot hardware has been successfully brought up.
+* MoveIt Servo is running.
+* `ball_tracker_servo` is running.
+* The USER PC and ROBOT PC share the same `ROS_DOMAIN_ID`.
+* The camera-to-robot calibration file exists and is valid.
+
+
+
 
 ## Suggested full run order
 
