@@ -1,0 +1,16 @@
+# Python dependencies for throw_and_catch
+# Generated from the active Python environment.
+# ROS dependencies are handled by package.xml and rosdep.
+# System requirements: Ubuntu 24.04, ROS 2 Jazzy, Python 3.12.
+
+numpy==1.26.4
+matplotlib==3.6.3
+scipy==1.11.4
+opencv-python==4.13.0.92
+ultralytics==8.4.14
+torch==2.10.0
+torchvision==0.25.0
+pyrealsense2==2.56.5.9235
+PyYAML==6.0.1
+onnx==1.20.1
+onnxruntime==1.24.4
