@@ -37,7 +37,8 @@ setup(
         'ball_detector = vision.ball_detector:main',
         'ball_pose_estimation = vision.ball_pose_estimation:main',
         'ball_pose_estimation_depth = vision.ball_pose_estimation_depth:main',
-        'visualize_tag_detections = vision.visualize_tag_detections:main'
+        'visualize_tag_detections = vision.visualize_tag_detections:main',
+        'ball_trajectory_planner = vision.ball_trajectory_planner:main',
         ],
     },
 )

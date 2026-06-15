@@ -38,9 +38,15 @@ def generate_launch_description():
             default_value='false',
             description='Use mock hardware for simulation',
         ),
+        DeclareLaunchArgument(
+            'use_sim',
+            default_value='false',
+            description='Whether to use simulation time',
+        ),
     ]
 
     use_mock_hardware = LaunchConfiguration('use_mock_hardware')
+    use_sim = LaunchConfiguration('use_sim')
 
     om_desc_share = get_package_share_directory('open_manipulator_description')
     om_moveit_config_share = get_package_share_directory('open_manipulator_moveit_config')
@@ -58,6 +64,9 @@ def generate_launch_description():
         ' ',
         'use_mock_hardware:=',
         use_mock_hardware,
+        ' ',
+        'use_sim:=',
+        use_sim,
         ' ',
         'ros2_control_type:=omy_f3m_position',
     ])
@@ -101,6 +110,9 @@ def generate_launch_description():
         parameters=[
             moveit_config.robot_description,
             moveit_config.robot_description_semantic,
+            {
+                'use_sim_time': use_sim,
+            },
         ],
     )
 
@@ -114,7 +126,7 @@ def generate_launch_description():
     ros2_control_node = launch_ros.actions.Node(
         package="controller_manager",
         executable="ros2_control_node",
-        parameters=[{'robot_description': urdf_file}, ros2_controllers_path],
+        parameters=[{'robot_description': urdf_file, 'use_sim_time': use_sim}, ros2_controllers_path],
         output="screen",
     )
 
@@ -127,7 +139,7 @@ def generate_launch_description():
             "joint_state_broadcaster",
         ],
         output="screen",
-        parameters=[{'robot_description': urdf_file}],
+        parameters=[{'robot_description': urdf_file, 'use_sim_time': use_sim}],
     )
 
     # Launch as much as possible in components
@@ -151,6 +163,7 @@ def generate_launch_description():
                     moveit_config.robot_description_semantic,
                     moveit_config.robot_description_kinematics,
                     moveit_config.joint_limits,
+                    {'use_sim_time': use_sim},
                 ],
                 condition=UnlessCondition(launch_as_standalone_node),
             ),
@@ -158,13 +171,13 @@ def generate_launch_description():
                 package="robot_state_publisher",
                 plugin="robot_state_publisher::RobotStatePublisher",
                 name="robot_state_publisher",
-                parameters=[moveit_config.robot_description],
+                parameters=[moveit_config.robot_description, {'use_sim_time': use_sim}],
             ),
             launch_ros.descriptions.ComposableNode(
                 package="tf2_ros",
                 plugin="tf2_ros::StaticTransformBroadcasterNode",
                 name="static_tf2_broadcaster",
-                parameters=[{"child_frame_id": "link0", "frame_id": "world"}],
+                parameters=[{"child_frame_id": "link0", "frame_id": "world"}, {'use_sim_time': use_sim}],
             ),
         ],
         output="screen",
@@ -184,6 +197,7 @@ def generate_launch_description():
             moveit_config.robot_description_semantic,
             moveit_config.robot_description_kinematics,
             moveit_config.joint_limits,
+            {'use_sim_time': use_sim},
         ],
         output="screen",
         condition=IfCondition(launch_as_standalone_node),

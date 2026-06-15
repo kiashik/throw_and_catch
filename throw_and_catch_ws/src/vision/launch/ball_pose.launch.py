@@ -6,13 +6,19 @@ This launch file:
 2. Launches the appropriate pose estimation node based on the 'pose_estimation_method' parameter:
    - 'pnp': Uses ball_pose_estimation (PnP-based)
    - 'depth': Uses ball_pose_estimation_depth (Depth-based)
+3. Launches the camera-frame to robot-frame pose conversion node
 
-Usage:
+Usage (must run in venv):
   ros2 launch vision ball_pose.launch.py pose_estimation_method:=pnp
   ros2 launch vision ball_pose.launch.py pose_estimation_method:=depth visualize:=true
+  Note: by default, pose_estimation_method is depth, and visualize is true.
 
 Improvements:
-04-01-2026: Added 'visualize' parameter to enable/disable visualization in the depth-based pose estimation node.
+04-01-2026: Added 'visualize' parameter to enable/disable visualization in the 
+            depth-based pose estimation node.
+05-09-2026: now this also launches cam to robot pose conversion node. 
+        
+
 """
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -29,7 +35,7 @@ def generate_launch_description():
 
     visualize_arg = DeclareLaunchArgument(
         'visualize',
-        default_value='false',
+        default_value='true',
         description='Enable visualization in the depth-based pose estimation node'
     )
 
@@ -41,6 +47,7 @@ def generate_launch_description():
         executable='ball_detector',
         name='ball_detector',
         output='screen',
+        # parameters=[{'visualize': visualize}],        # since pose estimation node is doing visualization, we don't need to pass this to the ball_detector node
     )
 
     ball_pose_estimation_pnp = Node(
@@ -60,9 +67,20 @@ def generate_launch_description():
         condition=IfCondition(PythonExpression(["'", method, "' == 'depth'"])),
     )
 
+    convert_pose_cam_to_rob = Node(
+        package='my_motion_planner',
+        executable='convert_pose_cam_to_rob',
+        name='ball_pose_cam_to_robot',
+        output='screen',
+    )
+
+    
+
     return LaunchDescription([
         pose_estimation_method_arg,
+        visualize_arg,
         ball_detector,
         ball_pose_estimation_pnp,
         ball_pose_estimation_depth,
+        convert_pose_cam_to_rob,
     ])

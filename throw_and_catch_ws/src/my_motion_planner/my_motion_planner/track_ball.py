@@ -58,7 +58,7 @@ class TrackBall(Node):
         # Ball pose subscriber
         self.ball_pose_sub = self.create_subscription(
             PoseStamped,
-            '/ball_pose_estimation/rob_pose',
+            '/vision/ball_pose_robot',
             self.ball_pose_callback,
             10
         )
@@ -159,7 +159,6 @@ class TrackBall(Node):
             
         if self.current_ball_pose is None or self.last_ball_update_time is None:
             return
-
 
         time_since_ball = (self.get_clock().now() - self.last_ball_update_time).nanoseconds / 1e9
         if time_since_ball > self.ball_lost_timeout:

@@ -6,16 +6,18 @@ Estimate the 3D pose (position) of a detected tennis ball in the camera frame us
 information from RealSense camera. This is simpler and faster than PnP, providing direct
 3D coordinates by combining 2D pixel location with depth measurement.
 
---- How to use:
+--- How to use (must run in venv):
 Run this node directly:
-    ros2 run vision ball_pose_detection_depth
+    ros2 run vision ball_pose_estimation_depth --ros-args -p visualize:=true
+    note: by default visualize is true.
 
-Or include it in a launch file. Requires:
+Or include it in a launch file. 
+--- Requires:
 - ball_detector node publishing ball centroids
 - RealSense camera node publishing aligned depth images and camera info
 
 --- Parameters / Configuration:
-- Ball detection topic: 'vision/ball_detections' (vision_msgs/BoundingBox2D). must only publish a new msg when a ball is detected.
+- Ball detection topic: 'vision/ball_detections' (vision_msgs/Detection2D). must only publish a new msg when a ball is detected.
 - Depth image topic: '/camera/camera/aligned_depth_to_color/image_raw' (sensor_msgs/Image)
 - Camera info topic: '/camera/camera/aligned_depth_to_color/camera_info' (sensor_msgs/CameraInfo)
 - Color image topic: '/camera/camera/color/image_raw' (sensor_msgs/Image) - for visualization
@@ -27,26 +29,51 @@ Or include it in a launch file. Requires:
 04-01-2026: added a "visualize" parameter to enable/disable visualization. If 
 visualization is disabled, the node will not subscribe to the color image topic 
 or display the OpenCV window, which may improve speed.
+
+05-07-2026: added qos_profile to only keep the latest message for both subscriber 
+and publisher, since we only care about the latest ball pose and don't want to 
+process old messages.
+
+05-13-2026: changed subed msg from BoundingBox2D to Detection2D for ball detection.
+    Now header timestamp is the image capture time. Proper time will likely be 
+    very important for ball trajectory prediction.
 """
 
+import os
 import numpy as np
+
+# OpenCV's Qt HighGUI backend may look for bundled fonts under cv2/qt/fonts,
+# which is not always present in venv installs. Point Qt at system fonts first.
+if 'QT_QPA_FONTDIR' not in os.environ:
+    for font_dir in (
+        '/usr/share/fonts/truetype/dejavu',
+        '/usr/share/fonts/dejavu',
+    ):
+        if os.path.isdir(font_dir):
+            os.environ['QT_QPA_FONTDIR'] = font_dir
+            break
+
 import cv2
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import CameraInfo, Image
-from vision_msgs.msg import BoundingBox2D
+from vision_msgs.msg import Detection2D
 from cv_bridge import CvBridge
 import pyrealsense2 as rs       # used to get depth scale from RealSense camera, but if pyrealsense2 is not available, it will default to 0.001 m/unit which is typical for D400 series
 
-BALL_RADIUS = 0.033  # meters. used to adjust depth value from ball surface to ball center
+from rclpy.qos import QoSHistoryPolicy, QoSProfile, QoSReliabilityPolicy
+
+
+BALL_RADIUS = 0.0325  # meters. used to adjust depth value from ball surface to ball center
+MAX_DEPTH_FROM_CAMERA = 5.5  # meters. if depth is greater than this, we consider it invalid (our room is like 8m wide, so ball should never be more than 5.5m away)
 
 class BallPoseEstimationDepth(Node):
     """
     ROS2 node that estimates 3D position of a tennis ball using depth information.
     
     Subscribes to:
-        - 'vision/ball_detections' (vision_msgs/BoundingBox2D): Ball detection in image pixels
+        - 'vision/ball_detections' (vision_msgs/Detection2D): Ball detection in image pixels
         - '/camera/camera/aligned_depth_to_color/image_raw' (sensor_msgs/Image): Depth image
         - '/camera/camera/aligned_depth_to_color/camera_info' (sensor_msgs/CameraInfo): Camera intrinsics
         - '/camera/camera/color/image_raw' (sensor_msgs/Image): Color image for visualization
@@ -70,7 +97,7 @@ class BallPoseEstimationDepth(Node):
         """
         super().__init__('ball_pose_estimation_depth')
 
-        self.declare_parameter('visualize', False)
+        self.declare_parameter('visualize', True)
 
         # Initialize storage for camera parameters
         self.fx = None  # Focal length x
@@ -89,12 +116,18 @@ class BallPoseEstimationDepth(Node):
         # Bridge for ROS-OpenCV conversion
         self.bridge = CvBridge()
 
+        qos_profile = QoSProfile(
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+        )
+
         # Subscribe to ball detection from ball_detector node
         self.detection_sub = self.create_subscription(
-            BoundingBox2D,
+            Detection2D,
             'vision/ball_detections',
             self.detection_callback,
-            10
+            qos_profile
         )
 
         # Subscribe to aligned depth image
@@ -102,7 +135,7 @@ class BallPoseEstimationDepth(Node):
             Image,
             '/camera/camera/aligned_depth_to_color/image_raw',
             self.aligned_depth_callback,
-            10
+            qos_profile
         )
 
         # Subscribe to camera info to get intrinsic parameters
@@ -110,7 +143,7 @@ class BallPoseEstimationDepth(Node):
             CameraInfo,
             '/camera/camera/aligned_depth_to_color/camera_info',
             self.camera_info_callback,
-            10
+            qos_profile
         )
         
         # Subscribe to color image for visualization if enabled
@@ -120,7 +153,7 @@ class BallPoseEstimationDepth(Node):
                 Image,
                 '/camera/camera/color/image_raw',
                 self.image_callback,
-                10
+                qos_profile
             )
         else:
             self.get_logger().info('Visualization disabled; color image subscription not created.')
@@ -129,7 +162,7 @@ class BallPoseEstimationDepth(Node):
         self.pose_pub_ = self.create_publisher(
             PoseStamped,
             'vision/ball_pose_cam',
-            10
+            qos_profile
         )
 
         self.get_logger().info("Ball pose detection (depth-based) node started")
@@ -205,13 +238,13 @@ class BallPoseEstimationDepth(Node):
         except Exception as e:
             self.get_logger().error(f"Error converting depth image: {str(e)}")
 
-    def detection_callback(self, msg: BoundingBox2D):
+    def detection_callback(self, msg: Detection2D):
         """
         Callback for ball detection messages.
         
         --- Parameters/Input:
-        msg : vision_msgs.msg.BoundingBox2D
-            Ball detection containing centroid and dimensions.
+        msg : vision_msgs.msg.Detection2D
+            Ball detection containing a header-stamped bounding box.
         
         --- Process:
         1. Store ball detection
@@ -242,7 +275,7 @@ class BallPoseEstimationDepth(Node):
         self.color_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         
         # Visualize if we have a ball detection
-        if self.ball_detection is not None:
+        if self.ball_detection is not None and self.visualize:
             self.visualize_pose()
 
     def compute_3d_position(self) -> PoseStamped | None:
@@ -268,8 +301,8 @@ class BallPoseEstimationDepth(Node):
 
         try:
             # Get pixel coordinates (ball centroid) (ensure within image bounds)
-            u = int(self.ball_detection.center.position.x)
-            v = int(self.ball_detection.center.position.y)
+            u = int(self.ball_detection.bbox.center.position.x)
+            v = int(self.ball_detection.bbox.center.position.y)
             
             height, width = self.depth_image.shape
             if u < 1 or u >= width - 1 or v < 1 or v >= height - 1:
@@ -292,8 +325,8 @@ class BallPoseEstimationDepth(Node):
             depth_m = depth_raw * self.depth_scale  # Convert raw depth units to meters using depth scale
             depth_m = depth_m + BALL_RADIUS  # Adjust depth to ball center by adding radius (since depth is to surface)
 
-            if depth_m <= 0 or depth_m > 6.0:  # Sanity check (ball should be within 6m). Our room is like 8m wide.
-                self.get_logger().warn(f"Invalid depth value: {depth_m:.3f}m. Ball must be within 6m of camera.")
+            if depth_m <= 0 or depth_m > MAX_DEPTH_FROM_CAMERA:  # Sanity check (ball should be within MAX_DEPTH_FROM_CAMERAm). Our room is like 8m wide.
+                self.get_logger().warn(f"Invalid depth value: {depth_m:.3f}m. Ball must be within {MAX_DEPTH_FROM_CAMERA}m of camera.")
                 return None
 
             # Ensure camera intrinsics are available
@@ -309,16 +342,16 @@ class BallPoseEstimationDepth(Node):
 
             # Create PoseStamped message
             pose_msg = PoseStamped()
-            pose_msg.header.stamp = self.get_clock().now().to_msg()
+            pose_msg.header.stamp = self.ball_detection.header.stamp  # Use timestamp which is image capture time
             pose_msg.header.frame_id = self.camera_frame_id or 'camera_color_optical_frame'
             
             pose_msg.pose.position.x = float(x)
             pose_msg.pose.position.y = float(y)
             pose_msg.pose.position.z = float(z)
 
-            self.get_logger().info(
-                f"Ball position: x={x:.3f}m, y={y:.3f}m, z={z:.3f}m)"
-            )
+            # self.get_logger().info(
+            #     f"Ball position: x={x:.3f}m, y={y:.3f}m, z={z:.3f}m)"
+            # )
 
             return pose_msg
 
@@ -343,11 +376,11 @@ class BallPoseEstimationDepth(Node):
 
         # Draw ball detection
         if self.ball_detection is not None:
-            center = (int(self.ball_detection.center.position.x), int(self.ball_detection.center.position.y))
+            center = (int(self.ball_detection.bbox.center.position.x), int(self.ball_detection.bbox.center.position.y))
             
             # Calculate pixel radius from bounding box
-            if self.ball_detection.size_x > 0 and self.ball_detection.size_y > 0:
-                pixel_radius = int((self.ball_detection.size_x + self.ball_detection.size_y) / 4.0)
+            if self.ball_detection.bbox.size_x > 0 and self.ball_detection.bbox.size_y > 0:
+                pixel_radius = int((self.ball_detection.bbox.size_x + self.ball_detection.bbox.size_y) / 4.0)
             else:
                 pixel_radius = 50  # Fallback
             
