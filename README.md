@@ -74,7 +74,7 @@ The repository also uses submodules for external dependencies:
 - User PC: CUDA-capable computer for YOLO inference, tested with an Lenovo Legion Slim 7 equipped with a NVIDIA GeForce RTX 3060 Laptop GPU running Ubuntu 24.04.4 LTS 
 - Tennis ball
 
-YOLO inference can be run on non CUDA-capable devices as long as the approirate YOLO model format is useed in `throw_and_catch_ws/src/vision/vision/ball_detector.py`
+YOLO inference can be run on non CUDA-capable devices as long as the appropriate YOLO model format is used in `throw_and_catch_ws/src/vision/vision/ball_detector.py`
 
 ## Physical Hardware Setup
 
@@ -200,7 +200,7 @@ Add or confirm this `ros__parameters` under `arm_controller` to `throw_and_catch
 allow_nonzero_velocity_at_trajectory_end: true
 ```
 
-This is needed for MoveIt-servo commands to be acctutate the arm otherwise the lower-level controller rejects servo commands since servo's trajectory endpoint are not necessarily zero velocity.
+This is needed for MoveIt Servo commands to actuate the arm. Otherwise, the lower-level controller may reject Servo commands because Servo trajectory endpoints are not necessarily zero velocity.
 
 ### Adjust Robot Velocity and Acceleration Limits
 
@@ -271,7 +271,7 @@ ros2 launch open_manipulator_bringup omy_f3m_unpack.launch.py
 > [**DANGER**]
 > After the initial setup, the unpacking script must be executed before operating the robot to prevent self-collision.
 > Run this script **only when the robot is in the packed posture**. Running it from any other orientation may cause damage to the robot.
-Then bringup the robot hardware:
+Then bring up the robot hardware:
 
 ```bash
 ros2 launch open_manipulator_bringup omy_f3m.launch.py
@@ -283,8 +283,8 @@ For additional hardware setup details, see:
 
 https://ai.robotis.com/omy/setup_guide_omy.html
 
-### Aside: Servo requies that the robot starts in a safe pose
-Move the arm to a safe pose by running the following comamnds from any terminal on the correct ROS network:
+### Aside: Servo requires that the robot starts in a safe pose
+Move the arm to a safe pose by running the following commands from any terminal on the correct ROS network:
 ```bash
 ros2 topic pub --once /arm_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory "{
   joint_names: ['joint1','joint2','joint3','joint4','joint5','joint6'],
@@ -294,7 +294,7 @@ ros2 topic pub --once /arm_controller/joint_trajectory trajectory_msgs/msg/Joint
   }]
 }" # goes to home pose
 ```
-It is highly recoomnded to keep this terminal open and move the arm to this pose or another safe pose before running an experiment.
+It is highly recommended to keep this terminal open and move the arm to this pose or another safe pose before running an experiment.
 
 
 ### Terminal 1. Start the RealSense D455 camera in a terminal on USER PC
@@ -309,7 +309,7 @@ The configuration enables color and depth streams, aligns depth to color, enable
 
 ### 2. Perform camera-to-robot calibration in a terminal on USER PC
 
-Run this when the camera or robot base has moved, or when the calibration file needs to be regenerated. Before rnning the calibration script, ensure that the enough AprilTags are clearly visible in from the camera.
+Run this when the camera or robot base has moved, or when the calibration file needs to be regenerated. Before running the calibration script, ensure that enough AprilTags are clearly visible from the camera.
 
 ```bash
 ros2 launch vision cal_cam_robot.launch.py
@@ -322,7 +322,7 @@ install/vision/share/vision/config/camera_robot_calibration.npy
 install/vision/share/vision/config/camera_robot_calibration.txt
 ```
 
-### Terminal 3. Start ball detection and 3D ball pose estimation a terminal on USER PC
+### Terminal 3. Start ball detection and 3D ball pose estimation in a terminal on USER PC
 
 ```bash
 ros2 launch vision ball_pose.launch.py pose_estimation_method:=depth visualize:=true
@@ -352,7 +352,7 @@ throw_and_catch_ws/src/vision/vision/yolo_models/yolo26n_my_ds_v2_best.engine
 ```
 
 ### Terminal 4. Launch servo in a terminal on USER PC
-Ensure the robot is in a safe pose(not collided or near a signuarity).
+Ensure the robot is in a safe pose(not collided or near a singularity).
 
 Simulation-oriented servo launch:
 
@@ -367,10 +367,10 @@ ros2 launch my_motion_planner2 my_servo2.launch.py use_sim_time:=false
 ```
 
 
-### Terminal 5. Tracking a ball in hand using MovieIt servo
+### Terminal 5. Tracking a ball in hand using MoveIt Servo
 
 
-Explicitaly pass the ball topic to the `ball_tracker_servo` node and run it:
+Explicitly pass the ball topic to the `ball_tracker_servo` node and run it:
 ```bash 
 ros2 run my_motion_planner2 ball_tracker_servo --ros-args -p target_topic:=/vision/ball_pose_robot
 ```
@@ -393,7 +393,7 @@ If the ball pose is not being published, verify that:
 2. The USER PC and ROBOT PC are connected to the same network.
 3. Both computers use the same ROS_DOMAIN_ID.
 4. The camera-to-robot calibration file has been generated.
-5. Rviz2 may be used to visalize the ball's position in camera or robot frame. This is a great way to verify that the estimated ball's position is correct.
+5. Rviz2 may be used to visualize the ball's position in camera or robot frame. This is a great way to verify that the estimated ball's position is correct.
 
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Running the system: Ball Catcher
@@ -402,7 +402,7 @@ Keep in mind, the arm will not actually catch the ball as the arm is incapable o
 ### Terminal 0 to 4: Follow the same steps in **Running the system: Ball Tracker**.
 The robot is brought up, ball pose in robot frame is publishing to `/vision/ball_pose_robot` and Servo is launched.
 
-### Termina 5. Start catch-point prediction
+### Terminal 5. Start catch-point prediction
 
 Recommended direct run command:
 
@@ -578,7 +578,7 @@ Then rebuild the `vision` package:
 colcon build --packages-select vision --symlink-install
 source install/setup.bash
 ```
-If the path to the yolo model are differnt on your device, then provide the correct path to `/throw_and_catch_ws/src/vision/vision/ball_detector`.
+If the path to the YOLO model is different on your device, then provide the correct path to `/throw_and_catch_ws/src/vision/vision/ball_detector`.
 
 
 ### Calibration file not found
@@ -589,7 +589,7 @@ Run the AprilTag calibration step again:
 ros2 launch vision cal_cam_robot.launch.py
 ```
 
-Then confirm that the generated `camera_robot_calibration.npy` exists in the installed `vision` package share directory.
+Then confirm that the generated `camera_robot_calibration.npy` exists in the installed `vision` package's share directory.
 
 ### Ball pose is detected in the camera frame but not the robot frame
 
