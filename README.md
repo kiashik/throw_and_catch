@@ -612,6 +612,6 @@ ros2 run ball_catch_predictor catch_predictor --ros-args -p catch_y:=-0.45
 
 Additional development notes and project logbooks are included below:
 
-- [Vision Logbook](docs/vision_logbook.pdf)
-- [Motion Planning Logbook](docs/motion_planning_logbook.pdf)
-- [Noise Characterization Logbook](docs/noise_characterization_logbook.pdf)
+- [Vision Logbook](docs/Vision_Logbook.pdf)
+- [Motion Planning Logbook](docs/Motion_Planning_Logbook.pdf)
+- [Noise Characterization Logbook](docs/Ball_catch_predictor_Logbook.pdf)
