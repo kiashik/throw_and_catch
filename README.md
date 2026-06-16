@@ -539,7 +539,7 @@ Use separate terminals for each step.
       ros2 run my_motion_planner2 ball_tracker_servo --ros-args -p target_topic:=/vision/catch_point    
     ```   
 
-8. Start MoveIt Servo / robot tracking:
+7. Start MoveIt Servo / robot tracking:
 
    ```bash
    ros2 launch my_motion_planner2 my_servo2.launch.py use_sim_time:=false
