@@ -26,16 +26,19 @@ open_manipulator_bringup/launch/omy_f3m_gazebo.launch.py
 modified:   open_manipulator_moveit_config/launch/omy_f3m_moveit.launch.py
 ``` -->
 
-# Video demo
-https://github.com/user-attachments/assets/1fe64234-4e06-4e40-97e2-6f174bede03d
-
-# Video Demo 2
-[Watch demo video](assets/OMY_ball_interception_demo.MOV)
-
 # Robotic Arm Catch
 
 ROS 2 workspace for a senior project that detects a tossed tennis ball, estimates its 3D position with an Intel RealSense D455, predicts a future catch point, and commands an OpenMANIPULATOR-Y robotic arm toward the predicted interception point.
 
+**Authors**: Ashik Islam, Kayla Go-Oco, Raegan Gritzmacher <br>
+**Advisor**: Siavash Farzan
+
+## Video Demos 
+### Demo with overlaid ball trajectory 
+https://github.com/user-attachments/assets/1fe64234-4e06-4e40-97e2-6f174bede03d
+
+### Demo without ball trajectory
+https://github.com/user-attachments/assets/0cb73a11-aef0-4745-8f79-20b0b4260299
 
 ## What is included
 
@@ -49,7 +52,7 @@ This repository contains a ROS 2 workspace at `throw_and_catch_ws/`.
 | `ball_catch_predictor` | Linear-drag Kalman filter for ball state estimation, future trajectory prediction, catch-plane intersection prediction, RViz markers, and optional CSV/plot logging. |
 | `my_motion_planner2` | Main MoveIt Servo configuration and nodes for real-time Cartesian control of the OpenMANIPULATOR-Y. |
 | `move_arm_to` | MoveIt/OMPL test nodes, simple MoveIt-based catching experiments, AprilTag/pose helper nodes, and earlier control examples. |
-| `my_motion_planner` | Earlier servo-control experiments, fake pose publishers, ball tracking experiments, and camera-to-robot pose conversion node used by the vision launch file. |
+| `my_motion_planner` | Ball tracking experiments, and camera-to-robot pose conversion node used by the vision launch file. |
 | `charcterize_sensor` | RealSense sensor characterization node used to estimate measurement noise and bias. |
 
 ### Submodules
@@ -61,131 +64,17 @@ The repository also uses submodules for external dependencies:
 - `throw_and_catch_ws/src/realsense-ros`
 - `throw_and_catch_ws/src/apriltag_ros`
 
+-------------------------
+
 ## Hardware used
 
-- OpenMANIPULATOR-Y, OMY F3M configuration
+- OpenMANIPULATOR-Y, OMY F3M configuration not including the Intel RealSense D405 depth camera
 - Intel RealSense D455 RGB-D camera
 - AprilTags for eye-to-hand camera-to-robot calibration
-- CUDA-capable computer for YOLO inference, tested with an NVIDIA GeForce RTX 3060 Laptop GPU
+- User PC: CUDA-capable computer for YOLO inference, tested with an Lenovo Legion Slim 7 equipped with a NVIDIA GeForce RTX 3060 Laptop GPU running Ubuntu 24.04.4 LTS 
 - Tennis ball
 
 YOLO inference can be run on non CUDA-capable devices as long as the approirate YOLO model format is useed in `throw_and_catch_ws/src/vision/vision/ball_detector.py`
-
-## Software requirements
-
-This project was developed for ROS 2 Jazzy on Ubuntu. Install ROS 2 Jazzy and the OMY/OpenMANIPULATOR dependencies first, following the ROBOTIS OMY setup guide.
-
-Common dependencies include:
-
-- ROS 2 Jazzy
-- MoveIt 2 / MoveIt Servo
-- OpenMANIPULATOR-Y ROS 2 packages
-- Intel RealSense SDK and ROS 2 wrapper
-- `apriltag_ros`
-- Python packages: `numpy`, `matplotlib`, `opencv-python`, `pyrealsense2`, `torch`, `ultralytics`
-
-
-# Install ROS dependencies
-```bash
-cd throw_and_catch_ws
-rosdep update
-rosdep install --from-paths src --ignore-src -r -y
-```
-# Install Python dependencies
-Highly recoomend using a python virtual enviroment. 
-TODO: add instruction to create venv
-```bash
-cd /throw_and_catch
-python3 -m pip install -r requirements.txt
-````
-
-## Clone the repository
-
-Use the `ashik_ubuntu` branch and initialize all submodules recursively.
-
-```bash
-git clone -b ashik_ubuntu https://github.com/kiashik/throw_and_catch.git
-cd throw_and_catch
-git submodule update --init --recursive
-```
-
-Equivalent one-line clone:
-
-```bash
-git clone -b ashik_ubuntu --recurse-submodules https://github.com/kiashik/throw_and_catch.git
-```
-
-### If the AprilTag submodule fails to clone
-
-The `apriltag_ros` submodule may use an SSH GitHub URL. If the submodule fails because SSH keys are not configured, change that submodule to HTTPS and sync again:
-
-```bash
-git config submodule.throw_and_catch_ws/src/apriltag_ros.url https://github.com/kiashik/apriltag_ros.git
-git submodule sync --recursive
-git submodule update --init --recursive
-```
-
-## Updating submodules
-
-To update a specific submodule, enter the submodule directory, pull the desired branch, then commit the updated submodule pointer from the parent repository.
-
-Example:
-
-```bash
-cd throw_and_catch_ws/src/<submodule_name>
-git pull origin <branch_name>
-cd ../../..
-git add throw_and_catch_ws/src/<submodule_name>
-git commit -m "Update <submodule_name> submodule"
-```
-
-## Manual OMY configuration changes
-
-Before running on hardware, manually check the OMY controller configuration files inside the OpenMANIPULATOR submodule.
-
-### Required controller change
-
-Edit:
-
-```text
-throw_and_catch_ws/src/open_manipulator/open_manipulator_bringup/config/omy_f3m/hardware_controller_manager.yaml
-```
-
-Add or confirm this parameter under the appropriate joint trajectory controller configuration:
-
-```yaml
-allow_nonzero_velocity_at_trajectory_end: true
-```
-
-This was added for the ball-tracking use case so the controller does not force every trajectory endpoint to decelerate to zero velocity.
-
-### Other files that may need local edits
-
-Check these files if simulation or MoveIt bringup does not match the project setup:
-
-```text
-throw_and_catch_ws/src/open_manipulator/open_manipulator_bringup/launch/omy_f3m_gazebo.launch.py
-throw_and_catch_ws/src/open_manipulator/open_manipulator_moveit_config/launch/omy_f3m_moveit.launch.py
-```
-
-TODO: need to add the exact final diffs for these two launch files.
-
-## Build the workspace
-
-From a new terminal:
-
-```bash
-source /opt/ros/jazzy/setup.bash
-cd throw_and_catch/throw_and_catch_ws
-rosdep update
-rosdep install --from-paths src --ignore-src -r -y --rosdistro jazzy
-colcon build --symlink-install
-source install/setup.bash
-```
-
-If you use a Python virtual environment for YOLO/Ultralytics, activate it before running the vision nodes and make sure it can access the ROS 2 Python packages.
-
-TODO: Add the final virtual environment setup command, if the project requires one.
 
 ## Physical Hardware Setup
 
@@ -220,15 +109,124 @@ For physical hardware operation, an Ethernet connection between the USER PC and 
 Both computers must use the same ROS 2 Domain ID: 
 
 ```bash
-export ROS_DOMAIN_ID=30
+export ROS_DOMAIN_ID=25
 ```
 Verify that the same value is configured on both machines before launching the system.
 
 For complete OpenMANIPULATOR-Y hardware setup instructions, refer to the official ROBOTIS documentation:
 
-https://ai.robotis.com/omy/setup_guide_omy.html
+https://ai.robotis.com/omy/setup_guide_omy.html <br>
 
-## Running the system
+https://docs.robotis.com/docs/systems/omy/introduction
+
+
+-------------------------
+
+## Software requirements
+
+This project was developed for ROS 2 Jazzy on Ubuntu 24.04.4 LTS. Install ROS 2 Jazzy and the OMY/OpenMANIPULATOR dependencies first, following the ROBOTIS OMY setup guide.
+
+Dependencies include:
+
+- ROS 2 Jazzy
+- MoveIt 2 / MoveIt Servo
+- OpenMANIPULATOR-Y ROS 2 packages
+- Intel RealSense SDK and ROS 2 wrapper
+- `apriltag_ros`
+- Python packages: `numpy`, `matplotlib`, `opencv-python`, `pyrealsense2`, `torch`, `ultralytics`
+
+
+# Install ROS dependencies
+```bash
+cd throw_and_catch_ws
+rosdep update
+rosdep install --from-paths src --ignore-src -r -y
+```
+
+# Install Python Dependencies
+
+It is highly recommended to use a Python virtual environment so the project dependencies do not conflict with system Python packages.
+
+Since this is a ROS 2 workspace, create the virtual environment with access to system site packages. This allows the virtual environment to still use ROS 2 Python packages installed through `apt`.
+
+```bash
+cd throw_and_catch/throw_and_catch_ws
+
+# Create a virtual environment with access to system Python packages
+python3 -m venv ros_yolo_venv --system-site-packages
+
+# Activate the virtual environment
+source ros_yolo_venv/bin/activate
+
+# Upgrade pip
+python3 -m pip install --upgrade pip
+
+# Install Python dependencies
+python3 -m pip install -r requirements.txt
+```
+> Note: Remember to activate the virtual environment before running Python-based scripts or nodes that depend on packages from `requirements.txt`. <br>
+> To activate the virtual environment later, run: `source ~/throw_and_catch/throw_and_catch_ws/ros_yolo_venv/bin/activate`
+--------------------
+
+## Clone the repository
+
+Use the `main` branch and initialize all submodules recursively.
+
+```bash
+git clone https://github.com/kiashik/throw_and_catch.git
+cd throw_and_catch
+git submodule update --init --recursive
+```
+
+### If the AprilTag submodule fails to clone
+
+The `apriltag_ros` submodule may use an SSH GitHub URL. If the submodule fails because SSH keys are not configured, change that submodule to HTTPS and sync again:
+
+```bash
+git config submodule.throw_and_catch_ws/src/apriltag_ros.url https://github.com/kiashik/apriltag_ros.git
+git submodule sync --recursive
+git submodule update --init --recursive
+```
+
+## Manual OMY configuration changes
+
+Before running on hardware, manually check the OMY controller configuration files inside the OpenMANIPULATOR submodule.
+
+### Required controller change
+
+Add or confirm this `ros__parameters` under `arm_controller` to `throw_and_catch_ws/src/open_manipulator/open_manipulator_bringup/config/omy_f3m/hardware_controller_manager.yaml`. Make sure to apply this change to both USER PC (for simulation) and ROBOT PC (for hardware). 
+
+```yaml
+allow_nonzero_velocity_at_trajectory_end: true
+```
+
+This is needed for MoveIt-servo commands to be acctutate the arm otherwise the lower-level controller rejects servo commands since servo's trajectory endpoint are not necessarily zero velocity.
+
+### Adjust Robot Velocity and Acceleration Limits
+
+The robot velocity and acceleration limits can be adjusted in the MoveIt joint limits configuration file:
+
+```bash
+throw_and_catch_ws/src/open_manipulator/open_manipulator_moveit_config/config/omy_f3m/joint_limits.yaml
+```
+
+## Build the workspace
+
+From a new terminal:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+cd throw_and_catch/throw_and_catch_ws
+rosdep update
+rosdep install --from-paths src --ignore-src -r -y --rosdistro jazzy
+colcon build
+source install/setup.bash
+```
+
+If you use a Python virtual environment for YOLO/Ultralytics, activate it before running the vision nodes and make sure it can access the ROS 2 Python packages. If `colcon build` fails inside the venv, consider building outside the venv.
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Running the system: Ball Tracker
 
 The system is modular. Run each subsystem in a separate terminal after sourcing the workspace:
 
@@ -236,8 +234,9 @@ The system is modular. Run each subsystem in a separate terminal after sourcing 
 source /opt/ros/jazzy/setup.bash
 cd throw_and_catch/throw_and_catch_ws
 source install/setup.bash
+export ROS_DOMAIN_ID=25
 ```
-### 0. Bring up the physical robot
+### Terminal 0. Bring up the physical robot
 
 This step is only required when running on physical hardware.
 
@@ -269,36 +268,48 @@ If the robot is currently packed, unpack it first:
 ros2 launch open_manipulator_bringup omy_f3m_unpack.launch.py
 ```
 
-Then launch the robot hardware:
+> [**DANGER**]
+> After the initial setup, the unpacking script must be executed before operating the robot to prevent self-collision.
+> Run this script **only when the robot is in the packed posture**. Running it from any other orientation may cause damage to the robot.
+Then bringup the robot hardware:
 
 ```bash
 ros2 launch open_manipulator_bringup omy_f3m.launch.py
 ```
 
-The robot should now be visible on the ROS 2 network and ready to receive commands from the USER PC.
+The robot should now be visible on the ROS 2 network and ready to receive commands from the USER PC. Verify by running `ros2 topic list` on a terminal in USER PC.
 
 For additional hardware setup details, see:
 
 https://ai.robotis.com/omy/setup_guide_omy.html
 
+### Aside: Servo requies that the robot starts in a safe pose
+Move the arm to a safe pose by running the following comamnds from any terminal on the correct ROS network:
+```bash
+ros2 topic pub --once /arm_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory "{
+  joint_names: ['joint1','joint2','joint3','joint4','joint5','joint6'],
+  points: [{
+    positions: [-1.5708, 0.0, 1.5708, -1.5708, 1.50708, 0.0],
+    time_from_start: {sec: 3}
+  }]
+}" # goes to home pose
+```
+It is highly recoomnded to keep this terminal open and move the arm to this pose or another safe pose before running an experiment.
 
-### 1. Start the RealSense D455 camera
+
+### Terminal 1. Start the RealSense D455 camera in a terminal on USER PC
 
 ```bash
 ros2 launch vision rs_launch_custom_params.launch.py
 ```
 
-This launches the RealSense ROS 2 wrapper using the project camera configuration in:
-
-```text
-throw_and_catch_ws/src/vision/config/rs_launch_config.yaml
-```
+This launches the RealSense ROS 2 wrapper using the project camera configuration in `throw_and_catch_ws/src/vision/config/rs_launch_config.yaml`.
 
 The configuration enables color and depth streams, aligns depth to color, enables RGB-D output, and uses the `848x480x60` color/depth profiles.
 
-### 2. Perform camera-to-robot calibration
+### 2. Perform camera-to-robot calibration in a terminal on USER PC
 
-Run this when the camera or robot base has moved, or when the calibration file needs to be regenerated.
+Run this when the camera or robot base has moved, or when the calibration file needs to be regenerated. Before rnning the calibration script, ensure that the enough AprilTags are clearly visible in from the camera.
 
 ```bash
 ros2 launch vision cal_cam_robot.launch.py
@@ -311,19 +322,10 @@ install/vision/share/vision/config/camera_robot_calibration.npy
 install/vision/share/vision/config/camera_robot_calibration.txt
 ```
 
-TODO: Confirm the final installed calibration path on your machine. `install/vision/share/vision/config/` 
-
-### 3. Start ball detection and 3D ball pose estimation
-
-```bash
-ros2 launch vision ball_pose.launch.py pose_estimation_method:=depth visualize:=false
-```
-
-Useful variations:
+### Terminal 3. Start ball detection and 3D ball pose estimation a terminal on USER PC
 
 ```bash
 ros2 launch vision ball_pose.launch.py pose_estimation_method:=depth visualize:=true
-ros2 launch vision ball_pose.launch.py pose_estimation_method:=pnp
 ```
 
 The depth mode is the main mode for this project. It starts:
@@ -346,14 +348,36 @@ Main topics:
 The current YOLO detector loads this model from the installed `vision` package share directory:
 
 ```text
-yolo_models/yolo26n_my_ds_v2_best.engine
+throw_and_catch_ws/src/vision/vision/yolo_models/yolo26n_my_ds_v2_best.engine
 ```
 
-#### Tracking a ball in hand
+### Terminal 4. Launch servo in a terminal on USER PC
+Ensure the robot is in a safe pose(not collided or near a signuarity).
 
-This launch file can be used to verify that the vision system is operating correctly before attempting full ball-catching experiments.
+Simulation-oriented servo launch:
 
-With the RealSense camera running, hold a tennis ball in front of the camera and launch the ball pose estimation pipeline. The system should detect the tennis ball, estimate its 3D position, and publish the ball pose in both the camera frame and robot frame.
+```bash
+ros2 launch my_motion_planner2 my_servo2.launch.py use_sim_time:=true
+```
+
+Hardware-oriented servo launch:
+
+```bash
+ros2 launch my_motion_planner2 my_servo2.launch.py use_sim_time:=false
+```
+
+
+### Terminal 5. Tracking a ball in hand using MovieIt servo
+
+
+Explicitaly pass the ball topic to the `ball_tracker_servo` node and run it:
+```bash 
+ros2 run my_motion_planner2 ball_tracker_servo --ros-args -p target_topic:=/vision/ball_pose_robot
+```
+
+With the RealSense camera running, hold a tennis ball in front of the robot and launch the ball pose estimation pipeline. The system should detect the tennis ball, estimate its 3D position, and publish the ball pose in both the camera frame and robot frame. The robot end-effector should continuously track the predicted catch point generated from the observed ball position. The motion should appear smooth and responsive, with the end-effector following the ball as it moves through the workspace.
+
+> Note: The default value of the `target_topic` parameter can be changed in the `ball_tracker_servo` node source code as desired. For example, set the default to `/vision/ball_pose_robot` for real-time ball tracking or `/vision/catch_point` for predicted catch point tracking.
 
 Useful debugging commands:
 
@@ -361,8 +385,6 @@ Useful debugging commands:
 ros2 topic echo /vision/ball_pose_cam
 
 ros2 topic echo /vision/ball_pose_robot
-
-rviz2
 ```
 
 If the ball pose is not being published, verify that:
@@ -371,14 +393,21 @@ If the ball pose is not being published, verify that:
 2. The USER PC and ROBOT PC are connected to the same network.
 3. Both computers use the same ROS_DOMAIN_ID.
 4. The camera-to-robot calibration file has been generated.
+5. Rviz2 may be used to visalize the ball's position in camera or robot frame. This is a great way to verify that the estimated ball's position is correct.
 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Running the system: Ball Catcher
+Keep in mind, the arm will not actually catch the ball as the arm is incapable of reacting fast enough.
 
-### 4. Start catch-point prediction
+### Terminal 0 to 4: Follow the same steps in **Running the system: Ball Tracker**.
+The robot is brought up, ball pose in robot frame is publishing to `/vision/ball_pose_robot` and Servo is launched.
+
+### Termina 5. Start catch-point prediction
 
 Recommended direct run command:
 
 ```bash
-ros2 run ball_catch_predictor catch_predictor --ros-args \
+ros2 run ball_catch_predictor catch_predictor_v3 --ros-args \
   -p catch_y:=-0.45 \
   -p prediction_rate_hz:=60.0 \
   -p drag_coeff:=0.05
@@ -405,31 +434,13 @@ A launch file also exists:
 ros2 launch ball_catch_predictor catch_predictor.launch.py
 ```
 
-### 5. Start MoveIt Servo control
-
-Simulation-oriented servo launch:
-
+### Visualization: use RViz2 to visualize the ball's current and estimated position
+Start Rviz with the provided config file:
 ```bash
-ros2 launch my_motion_planner2 my_servo2.launch.py use_sim_time:=true
+rviz2 -d ~/throw_and_catch/catch_config.rviz
 ```
 
-Hardware-oriented servo launch:
-
-```bash
-ros2 launch my_motion_planner2 my_servo2.launch.py use_sim_time:=false
-```
-<!-- 
-TODO: Confirm the final hardware launch behavior. In the current branch, the real-hardware MoveIt bringup include is present but commented out in `my_servo2.launch.py`, so the hardware bringup may need to be launched separately. -->
-TODO: add hardware bring up instruction or link to omy wbsite
-
-After Servo is running, start the ball tracking servo node if it is not already included in your launch sequence:
-
-```bash
-ros2 run my_motion_planner2 ball_tracker_servo
-```
-
-<!-- TODO: Confirm whether the final tracking node should be `my_motion_planner2 ball_tracker_servo`, `my_motion_planner ball_tracker_servo`, or a newer controller node. -->
-
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ## Optional/testing commands
 
 ### Run the simple MoveIt catching experiment
@@ -456,37 +467,6 @@ ros2 launch move_arm_to my_omy_moveit.launch.py use_sim_time:=false
 ros2 run charcterize_sensor characterize_rs
 ```
 
-TODO: Add the required setup for the characterization test, including where to place the ball, how many samples to collect, and where results are saved. link to pdf
-
-### Verify Ball Tracking
-
-Before attempting ball-catching experiments, verify that the complete tracking pipeline is functioning correctly.
-
-Start the required system components:
-
-```bash
-ros2 launch vision rs_launch_custom_params.launch.py
-```
-
-```bash
-ros2 launch vision ball_pose.launch.py pose_estimation_method:=depth visualize:=false
-```
-
-```bash
-ros2 run ball_catch_predictor catch_predictor --ros-args -p catch_y:=-0.45
-```
-
-```bash
-ros2 launch my_motion_planner2 my_servo2.launch.py use_sim_time:=false
-```
-
-```bash
-ros2 run my_motion_planner2 ball_tracker_servo
-```
-
-With all nodes running, slowly move a tennis ball throughout the camera field of view.
-
-The robot end-effector should continuously track the predicted catch point generated from the observed ball position. The motion should appear smooth and responsive, with the end-effector following the ball as it moves through the workspace.
 
 Useful debugging commands:
 
@@ -499,7 +479,7 @@ ros2 topic echo /vision/catch_point
 ```
 
 ```bash
-rviz2
+rviz2 -d ~/throw_and_catch/catch_config.rviz
 ```
 
 Verify the following:
@@ -544,31 +524,20 @@ Use separate terminals for each step.
    ros2 launch vision ball_pose.launch.py pose_estimation_method:=depth visualize:=false
    ```
 
-5. Start catch-point prediction:
+5. Start catch-point prediction or ball tracking (run only 1 at a time):
 
    ```bash
-   ros2 run ball_catch_predictor catch_predictor --ros-args -p catch_y:=-0.45
+   ros2 run ball_catch_predictor catch_predictor_v3 --ros-args -p catch_y:=-0.45
+   ros2 run my_motion_planner2 ball_tracker_servo
+
    ```
 
 6. Start MoveIt Servo / robot tracking:
 
    ```bash
    ros2 launch my_motion_planner2 my_servo2.launch.py use_sim_time:=false
-   ros2 run my_motion_planner2 ball_tracker_servo
    ```
 
-TODO: Replace this with one final launch command once all subsystem launches are integrated.
-
-## Safety notes
-
-This project moves a physical robotic arm toward dynamically changing targets. Before running on hardware:
-
-- Start at reduced speed.
-- Keep the workspace clear.
-- Use conservative joint, velocity, acceleration, and workspace limits.
-- Verify emergency stop behavior.
-- Test each subsystem in simulation before hardware tests.
-- Do not stand inside the robot workspace during motion.
 
 ## Troubleshooting
 
@@ -602,6 +571,8 @@ Then rebuild the `vision` package:
 colcon build --packages-select vision --symlink-install
 source install/setup.bash
 ```
+If the path to the yolo model are differnt on your device, then provide the correct path to `/throw_and_catch_ws/src/vision/vision/ball_detector`.
+
 
 ### Calibration file not found
 
@@ -637,12 +608,10 @@ Try adjusting the catch plane:
 ros2 run ball_catch_predictor catch_predictor --ros-args -p catch_y:=-0.45
 ```
 
-## Repository notes and TODOs
+# Misc Development Documentation
 
-- TODO: Add a single integrated launch file for the complete system.
-- TODO: Add final hardware bringup commands for the OMY arm.
-- TODO: Add exact Python virtual environment setup.
-- TODO: Add final YOLO training/export instructions.
-- TODO: Add final calibration procedure with AprilTag size, IDs, and placement.
-- TODO: Add example RViz configuration for the full system.
-- TODO: Add a topic diagram showing camera, vision, prediction, and motion-control data flow.
+Additional development notes and project logbooks are included below:
+
+- [Vision Logbook](docs/vision_logbook.pdf)
+- [Motion Planning Logbook](docs/motion_planning_logbook.pdf)
+- [Noise Characterization Logbook](docs/noise_characterization_logbook.pdf)
