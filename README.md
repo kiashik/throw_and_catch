@@ -26,7 +26,11 @@ open_manipulator_bringup/launch/omy_f3m_gazebo.launch.py
 modified:   open_manipulator_moveit_config/launch/omy_f3m_moveit.launch.py
 ``` -->
 
+# Video demo
+https://github.com/user-attachments/assets/1fe64234-4e06-4e40-97e2-6f174bede03d
 
+# Video Demo 2
+[Watch demo video](assets/OMY_ball_interception_demo.MOV)
 
 # Robotic Arm Catch
 
