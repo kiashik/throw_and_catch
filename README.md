@@ -524,15 +524,22 @@ Use separate terminals for each step.
    ros2 launch vision ball_pose.launch.py pose_estimation_method:=depth visualize:=false
    ```
 
-5. Start catch-point prediction or ball tracking (run only 1 at a time):
+5. Start catch-point prediction (if catching):
 
    ```bash
    ros2 run ball_catch_predictor catch_predictor_v3 --ros-args -p catch_y:=-0.45
-   ros2 run my_motion_planner2 ball_tracker_servo
-
    ```
+6. Start ball tracking (run only 1 at a time):
+   If tracking ball:
+   ```bash
+      ros2 run my_motion_planner2 ball_tracker_servo --ros-args -p target_topic:=/vision/ball_pose_robot    
+    ```
+   If catching ball:
+   ```bash
+      ros2 run my_motion_planner2 ball_tracker_servo --ros-args -p target_topic:=/vision/catch_point    
+    ```   
 
-6. Start MoveIt Servo / robot tracking:
+8. Start MoveIt Servo / robot tracking:
 
    ```bash
    ros2 launch my_motion_planner2 my_servo2.launch.py use_sim_time:=false
