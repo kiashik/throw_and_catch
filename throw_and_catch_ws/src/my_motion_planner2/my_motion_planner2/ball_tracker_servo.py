@@ -78,6 +78,8 @@ class BallTracker(Node):
         self.max_linear_velocity = get_float_param('max_linear_velocity', MAX_LINEAR_VELOCITY) # m/s
         self.near_goal_tolerance = get_float_param('near_goal_tolerance', 0.01) # m
 
+        self.declare_parameter('target_topic', '/vision/ball_pose_robot')
+        self.target_topic = self.get_parameter('target_topic').get_parameter_value().string_value
 
         self.ball_pos_base = None  # initialize empty ball pose
         self.last_ball_time = None
@@ -88,7 +90,7 @@ class BallTracker(Node):
         # Subscriber to real-time ball pose topic
         self.ball_pose_sub = self.create_subscription(
             PoseStamped,
-            '/vision/ball_pose_robot',
+            self.target_topic,
             self.ball_callback,
             10
         )
